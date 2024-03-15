@@ -11,7 +11,7 @@ import { createConfig, WagmiProvider } from "wagmi";
 import { http } from "viem";
 import { arbitrum, baseSepolia, arbitrumSepolia, sepolia } from "viem/chains";
 import Navbar from "@/src/_components/navbar";
-// import Footer from "@/src/_components/footer"
+import Footer from "@/src/_components/footer"
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -48,7 +48,7 @@ export default function RootLayout(props: { children: ReactNode }) {
               <DynamicWagmiConnector>
                 <Navbar />
                   {props.children}
-                {/* <Footer /> */}
+                <Footer />
               </DynamicWagmiConnector>
             </QueryClientProvider>
           </WagmiProvider>

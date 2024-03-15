@@ -1,10 +1,6 @@
-import Image from "next/image";
-import { DynamicWidget } from '@dynamic-labs/sdk-react-core';
-
 export default function Home() {
   return (
     <main>
-          <DynamicWidget />
       <div>
         <h1>Dynamic Labs</h1>
         <p>
