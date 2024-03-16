@@ -6,6 +6,7 @@ import {OwnerIsCreator} from "lib/ccip/contracts/src/v0.8/shared/access/OwnerIsC
 import {Client} from "lib/ccip/contracts/src/v0.8/ccip/libraries/Client.sol";
 import {CCIPReceiver} from "lib/ccip/contracts/src/v0.8/ccip/applications/CCIPReceiver.sol";
 import {IERC20} from "lib/foundry-chainlink-toolkit/lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {ISwapRouter} from "lib/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
 /* CCIP */
 contract EntryPoint is CCIPReceiver, OwnerIsCreator {
@@ -170,9 +171,13 @@ contract EntryPoint is CCIPReceiver, OwnerIsCreator {
         // Expect one token to be transferred at once, but you can transfer several tokens.
         s_lastReceivedTokenAddress = any2EvmMessage.destTokenAmounts[0].token;
         s_lastReceivedTokenAmount = any2EvmMessage.destTokenAmounts[0].amount;
-        //TODO: initiate swap
+
+        // initiate swap
         amountOut = swapExactInputSingleHop(s_lastReceivedTokenAddress, tokenOut, poolFee, s_lastReceivedTokenAmount);
         require(amountOut >= minAmountOut, "Slippage is too high");
+
+        // Send the receipt tokens to Hyperlane Wrap routes
+
     }
 
 
