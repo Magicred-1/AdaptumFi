@@ -1,17 +1,48 @@
 pragma solidity ^0.8.17;
 
 interface IPositionHandler {
+    /* -------------------- EVENTS -------------------------*/
     event Deposit(
-        address tokenA, address tokenB, uint256 positionID, address owner, uint256 amount_in, uint256 amountSwaps
+        address tokenA,
+        address tokenB,
+        uint256 positionID,
+        address owner,
+        uint256 amount_in,
+        uint256 amountSwaps
     );
-
-    event Withdraw(address tokenA, address tokenB, uint256 positionID, uint256 amount, address destinationAddress);
-
+    event Withdraw(
+        address tokenA,
+        address tokenB,
+        uint256 positionID,
+        uint256 amountTokenARemaining,
+        uint256 amountTokenB,
+        address destinationAddress
+    );
     event SwapExecuted(address tokenA, address tokenB, uint256 amountSwapped);
 
-    function deposit(address tokenA, address tokenB, address owner, uint256 amount_in, uint256 amount_swaps) external;
+    /* -------------------- ERRORS -------------------------*/
 
-    function withdraw(address tokenA, address tokenB, address destinationAddress, uint256 indexDeposit) external;
+    error ZeroSwapAmountError(
+        address _tokenA,
+        address _tokenB,
+        address _owner,
+        uint256 _amount_in
+    );
+
+    function deposit(
+        address tokenA,
+        address tokenB,
+        address owner,
+        uint256 amount_in,
+        uint256 amount_swaps
+    ) external;
+
+    function withdraw(
+        address tokenA,
+        address tokenB,
+        address destinationAddress,
+        uint256 indexDeposit
+    ) external;
 
     function execute(address tokenA, address tokenB) external;
 }
