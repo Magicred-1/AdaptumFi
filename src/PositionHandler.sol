@@ -1,13 +1,9 @@
-
-pragma solidity 0.8.17^;
-
+pragma solidity ^0.8.17;
 import {IPositionHandler} from "./interfaces/IPositionHandler.sol";
 import {PositionData} from "./lib/PositionData.sol";
 
-
-contract PositionHandkler is IPositionHandler{
-
-    mapping(address tokenA => mapping (address tokenB => mapping(uint256 positionID => PositionData.UserData userPosData))) userPosTracker;
+contract PositionHandkler is IPositionHandler {
+    mapping(address tokenA => mapping(address tokenB => mapping(uint256 positionID => PositionData.UserData userPosData))) userPosTracker;
     mapping(address tokenA => mapping(address tokenB => mapping(uint256 nSwapExecuted => PositionData.CumData))) cumulativePosData;
 
     function deposit(
@@ -17,15 +13,7 @@ contract PositionHandkler is IPositionHandler{
         uint256 amount_in
     ) external;
 
-    function withdraw(
-        uint256 positionID,
-        address destinationAddress
-    ) external;
+    function withdraw(uint256 positionID, address destinationAddress) external;
 
-    function execute(
-        address tokenA,
-        address tokenB
-    ) external;
-
-    
+    function execute(address tokenA, address tokenB) external;
 }
