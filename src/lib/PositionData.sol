@@ -1,7 +1,6 @@
-pragma solidity 0.8.19^;
+pragma solidity ^0.8.19;
 
 library PositionData {
-
     struct UserData {
         address tokenIn;
         address tokenOut;
@@ -9,11 +8,11 @@ library PositionData {
         uint256 nbSwapsEnd;
         uint256 amountIn;
         uint256 amountSwaps;
-        bool isInsolvent; 
+        bool isInsolvent;
         address owner;
-        }
-    
-    struct CumData { 
+    }
+
+    struct CumData {
         uint256 cumBoost;
         uint256 cumPrice;
     }

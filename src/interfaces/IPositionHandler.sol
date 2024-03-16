@@ -1,7 +1,6 @@
-pragma solidity 0.8.17^;
+pragma solidity ^0.8.17;
 
-interface IPositionHandler { 
-
+interface IPositionHandler {
     event Deposit(
         address tokenA,
         address tokenB,
@@ -19,30 +18,22 @@ interface IPositionHandler {
         address destinationAddress
     );
 
-    event SwapExecuted(
-        address tokenA,
-        address tokenB,
-        uint256 amountSwapped
-    );
+    event SwapExecuted(address tokenA, address tokenB, uint256 amountSwapped);
 
     function deposit(
         address tokenA,
         address tokenB,
         address owner,
-        uint256 amount_in
+        uint256 amount_in,
+        uint256 amount_swaps
     ) external;
-
 
     function withdraw(
-        uint256 positionID,
-        address destinationAddress
-    ) external;
-
-    function execute(
         address tokenA,
-        address tokenB
+        address tokenB,
+        address destinationAddress,
+        uint256 indexDeposit
     ) external;
 
-    
-    
+    function execute(address tokenA, address tokenB) external;
 }
