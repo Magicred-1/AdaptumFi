@@ -2,8 +2,11 @@
 import React, { useState } from 'react'
 import InvestChart from '@/src/_components/charts/invest-chart';
 import ComparisonChart from '@/src/_components/charts/comparison-chart';
+import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
+import { getChainId } from '@wagmi/core'
+import { switchNetwork } from '@wagmi/core'
 
-export const Invest = () => {
+export default function Invest() {
   const [network, setNetwork] = useState('');
   const [sellCurrency, setSellCurrency] = useState('USDC');
   const [receiveCurrency, setReceiveCurrency] = useState('ETH');
@@ -22,6 +25,13 @@ export const Invest = () => {
     setAmount((123.23 / 2).toString());
   };
 
+  const handleNetworkChange = () => {
+    if (getChainId() !== network) {
+      switchNetwork(network);
+      setNetwork(network);
+    }
+  }
+
   return (
     <div className="bg-gray-800 min-h-screen flex flex-col md:flex-row p-4 md:p-8">
       <div className="flex flex-col w-full md:w-1/3 md:mr-8">
@@ -30,10 +40,10 @@ export const Invest = () => {
           <label className="block text-gray-400 mb-2">Choose network :</label>
           <select className="w-full bg-gray-700 text-white p-3 rounded-lg focus:outline-none" value={network} onChange={(e) => setNetwork(e.target.value)}>
             <option value="">Select Network</option>
-            <option value="Sepolia">Sepolia</option>
-            <option value="Arbitrum">Arbitrum One</option>
-            <option value="ArbitrumSepolia">Arbitrum Sepolia</option>
-            <option value="BaseSepolia">Base Sepolia</option>
+            <option value="11155111" >Sepolia</option>
+            <option value="42161">Arbitrum One</option>
+            <option value="421614">Arbitrum Sepolia</option>
+            <option value="84532">Base Sepolia</option>
           </select>
         </div>
 
@@ -100,7 +110,7 @@ export const Invest = () => {
             <button className="bg-gray-600 text-white px-4 py-2 rounded-lg" onClick={() => setHyperplaneOption('Base Sepolia')}>Base Sepolia</button>
           </div>
         </div>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg w-full mt-4" onClick={() => setNetwork('')}>Change network</button>
+          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg w-full mt-4" onClick={() => handleNetworkChange()}>Change network</button>
       </div>
 
       <div className="flex flex-col w-full md:w-2/3 mt-8 md:mt-0">
@@ -136,6 +146,4 @@ export const Invest = () => {
       </div>
     </div>
   );
-};
-
-export default Invest;
+}
