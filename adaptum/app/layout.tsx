@@ -36,7 +36,7 @@ const environmentId = process.env.NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID || "730d3c1
 export default function RootLayout(props: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body>
         <DynamicContextProvider
           settings={{
             environmentId,

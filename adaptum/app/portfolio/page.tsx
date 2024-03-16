@@ -1,5 +1,7 @@
 'use client';
 import React, { useState } from 'react'
+import BalanceCard from '@/src/_components/portfolio/balance-card';
+import PositionCard from '@/src/_components/portfolio/position-card';
 
 const positions = {
     opened: [
@@ -30,7 +32,7 @@ const Portfolio = () => {
         <div className="p-4 bg-gray-900 min-h-screen text-white grid grid-cols-12 md:gap-8 md:pt-8">
             {/* Balance and Graph Section */}
             <div className="col-span-12 md:col-span-4">
-            {/* <BalanceCard balance={balance} currency={currency} /> */}
+            <BalanceCard balance={balance} currency={currency} />
         </div>
         <div className='col-span-12 md:col-span-8'>
             <span className="text-white text-base">Positions</span>
@@ -51,7 +53,9 @@ const Portfolio = () => {
             <div>
                
             </div>
-            
+            {positions[activeTab as keyof typeof positions].map(position => (
+              <PositionCard key={position.id} position={position} isOpened={activeTab === 'opened'} />
+            ))}
             </div>
             </div> 
     );
