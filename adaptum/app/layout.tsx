@@ -42,7 +42,7 @@ export default function RootLayout(props: { children: ReactNode }) {
           settings={{
             environmentId,
             walletConnectors: [
-              EthereumWalletConnectors, 
+              EthereumWalletConnectors,
               ZeroDevSmartWalletConnectors,
             ],
           }}

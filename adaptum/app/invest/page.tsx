@@ -2,9 +2,6 @@
 import React, { useState } from 'react'
 import InvestChart from '@/src/_components/charts/invest-chart';
 import ComparisonChart from '@/src/_components/charts/comparison-chart';
-import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
-import { getChainId } from '@wagmi/core'
-import { switchNetwork } from '@wagmi/core'
 
 export default function Invest() {
   const [network, setNetwork] = useState('');
@@ -24,13 +21,6 @@ export default function Invest() {
     // Assuming 123.23 is the max amount available for simplicity
     setAmount((123.23 / 2).toString());
   };
-
-  const handleNetworkChange = () => {
-    if (getChainId() !== network) {
-      switchNetwork(network);
-      setNetwork(network);
-    }
-  }
 
   return (
     <div className="bg-gray-800 min-h-screen flex flex-col md:flex-row p-4 md:p-8">
@@ -110,7 +100,7 @@ export default function Invest() {
             <button className="bg-gray-600 text-white px-4 py-2 rounded-lg" onClick={() => setHyperplaneOption('Base Sepolia')}>Base Sepolia</button>
           </div>
         </div>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg w-full mt-4" onClick={() => handleNetworkChange()}>Change network</button>
+          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg w-full mt-4" onClick={() => setNetwork('11155111')}>Change Network</button>
       </div>
 
       <div className="flex flex-col w-full md:w-2/3 mt-8 md:mt-0">

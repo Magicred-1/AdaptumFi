@@ -1,7 +1,7 @@
 <a href="https://www.adaptum.finance"><img src ="./public/logo_variant_full.png" alt="Adaptum Fi" width="100%"/></a>
 
-# [AdaptumFi](#) - The Future of DCA is Here!
-## Powered by <img src="https://moonbeam.network/wp-content/uploads/2022/10/Hyperlane-Ecosystem-Logo.png" alt="Hyperlane Logo" width="35"/> Hyperlane.
+# [AdaptumFi](https://adaptum.xyz/) - The Future of DCA is Here!
+## Powered by <img src="https://www.hyperlane.xyz/_next/static/media/logo-image.57d67522.svg" alt="Hyperlane Logo" width="35"/> Hyperlane & <img src="https://cryptologos.cc/logos/chainlink-link-logo.png" alt="Chainlink Logo" width="35"> Chainlink.
 
 At AdaptumFi, we are building the future of DCA (Dollar Cost Averaging) by providing a decentralized, in an cross chain
 & On-Chain manner, to help users invest in their favorite assets, without the need to worry about the market volatility.
@@ -10,15 +10,15 @@ At AdaptumFi, we are building the future of DCA (Dollar Cost Averaging) by provi
 
 - **Decentralized**: AdaptumFi is a decentralized platform, which means that the users have full control over their funds and investments.
 
-- **Cross Chain**: AdaptumFi is a cross chain platform, which means that the users can invest in their favorite assets, across different blockchains.
+- **Cross Chain**: AdaptumFi is a cross chain platform, which means that the users can invest in their favorite assets, across different blockchains of their choice.
 
-- **On-Chain**: AdaptumFi is an on-chain platform, which means that the users can invest in their favorite assets, without the need to worry about the market volatility.
+- **Adaptive**: AdaptumFi is an on-chain platform using CBBI Index to adapt buy positions, which means that the users can invest in their favorite assets, without the need to worry about the market volatility.
 
 - **DCA (Dollar Cost Averaging)**: AdaptumFi is a DCA platform, which means that the users can invest in their favorite assets, without the need to worry about the market volatility.
 
 # Preview
 
-The app is deployed on Vercel and can be accessed at [https://adaptumfi.xyz/](https://adaptumfi.xyz/)
+The app is deployed on Vercel and can be accessed at [https://adaptum.xyz/](https://adaptum.xyz/)
 
 ## Getting started
 
@@ -30,19 +30,17 @@ pnpm i
 
 Copy `.env.example` to `.env.local` and set the environment variables
 
-```bash
-
 To get a Dynamic.xyz API key, visit [Dynamic.xyz](https://dynamic.xyz/)
 
 ## Deployed Contracts
 
-| CONTRACTS              | ADDRESSES                                  |
-|------------------------|--------------------------------------------|
-| X        | x |
-| x | x |
-| x       | x |
-| x | x |
-| x        | x                                         |
+| CONTRACTS              | ADDRESSES                                  | Network                                  |
+|------------------------|--------------------------------------------|--------------------------------------------|
+| X | x | x |
+| x | x | x |
+| x | x | x |
+| x | x | x |
+| x | x | x |
 
 ## Stack
 
@@ -51,6 +49,9 @@ To get a Dynamic.xyz API key, visit [Dynamic.xyz](https://dynamic.xyz/)
 - [Tailwind CSS](https://tailwindcss.com/)
 - [Wagmi] (https://wagmi.io/)
 - [Dynamic.xyz](https://dynamic.xyz/)
+- [Chainlink CCIP](https://chain.link)
+- [CCTP](https://www.circle.com/en/cross-chain-transfer-protocol)
+- [Hyperlane](https://hyperlane.xyz/)
 - Multi-Chain (Ethereum (Sepolia), Arbitrum, Base (Sepolia))
 
 ## Authors
