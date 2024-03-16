@@ -1,4 +1,4 @@
-<a href="https://www.adaptum.finance"><img src ="./public/logo_variant_full.png" alt="Adaptum Fi" width="100%"/></a>
+<a href="https://www.adaptum.finance"><img src ="./public/Banner_Adaptum.png" alt="Adaptum Fi" width="100%"/></a>
 
 # [AdaptumFi](https://adaptum.xyz/) - The Future of DCA is Here!
 ## Powered by <img src="https://www.hyperlane.xyz/_next/static/media/logo-image.57d67522.svg" alt="Hyperlane Logo" width="35"/> Hyperlane & <img src="https://cryptologos.cc/logos/chainlink-link-logo.png" alt="Chainlink Logo" width="35"> Chainlink.
