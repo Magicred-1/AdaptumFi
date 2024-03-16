@@ -15,7 +15,7 @@ library PositionData {
         uint256 cumBoost;
         uint256 cumPrice;
     }
-
+    
     struct GlobalData {
         uint256 nSwapsExecuted;
     }
