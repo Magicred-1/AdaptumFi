@@ -12,8 +12,9 @@ import { http } from "viem";
 import { arbitrum, baseSepolia, arbitrumSepolia, sepolia } from "viem/chains";
 import Navbar from "@/src/_components/navbar";
 import Footer from "@/src/_components/footer"
+import localfont from 'next/font/local'
 
-const inter = Inter({ subsets: ["latin"] });
+const Lexend = localfont({ src: '../src/assets/fonts/Lexend.ttf' });
 
 const config = createConfig({
   chains: [sepolia, baseSepolia, arbitrum, arbitrumSepolia],
@@ -36,7 +37,7 @@ const environmentId = process.env.NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID || "730d3c1
 export default function RootLayout(props: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body>
+      <body className={`${Lexend.className}`}>
         <DynamicContextProvider
           settings={{
             environmentId,
