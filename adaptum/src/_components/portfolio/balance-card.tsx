@@ -1,4 +1,5 @@
 import React from 'react';
+import RenderLineChart from '@/src/_components/charts/portfolio-chart';
 
 interface BalanceCardProps {
     balance: string;
@@ -20,7 +21,7 @@ const BalanceCard = ({ balance, currency }: BalanceCardProps) => (
       </div>
       {/* Placeholder for the chart */}
       <div className="w-full h-48 bg-gray-700 rounded-xl flex items-center justify-center">
-        <span className="text-gray-400">Chart Placeholder</span>
+        <RenderLineChart />
       </div>
     </div>
   );

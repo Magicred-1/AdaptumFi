@@ -24,7 +24,7 @@ const PositionCard = ({ position, isOpened }: { position: Position, isOpened: bo
             </span>
             <span className="text-gray-300">{isOpened ? 'Active' : 'Finished'}</span>
           </div>
-          <button className={`text-xs font-semibold py-2 px-4 rounded-full ${isOpened ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-600'} text-white transition duration-150 ease-in-out`}>
+          <button className={`text-xs font-semibold py-2 px-4 rounded-full ${isOpened ? 'bg-red-400 hover:bg-red-600' : 'bg-blue-600'} text-white transition duration-150 ease-in-out`}>
 
             {
               isOpened ? (
