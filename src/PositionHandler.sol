@@ -5,7 +5,6 @@ import {PositionData} from "./lib/PositionData.sol";
 contract PositionHandkler is IPositionHandler {
     mapping(address tokenA => mapping(address tokenB => mapping(uint256 positionID => PositionData.UserData userPosData))) userPosTracker;
     mapping(address tokenA => mapping(address tokenB => mapping(uint256 nSwapExecuted => PositionData.CumData))) cumulativePosData;
-
     function deposit(
         address tokenA,
         address tokenB,

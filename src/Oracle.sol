@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
-import {Chainlink, ChainlinkClient} from "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
-import {ConfirmedOwner} from "@chainlink/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
-import {LinkTokenInterface} from "@chainlink/contracts/src/v0.8/shared/interfaces/LinkTokenInterface.sol";
+import {Chainlink, ChainlinkClient} from "chainlink/src/v0.8/ChainlinkClient.sol";
+import {ConfirmedOwner} from "chainlink/src/v0.8/shared/access/ConfirmedOwner.sol";
+import {LinkTokenInterface} from "chainlink/src/v0.8/shared/interfaces/LinkTokenInterface.sol";
 
 /**
  * Request testnet LINK and ETH here: https://faucets.chain.link/
@@ -56,7 +56,7 @@ contract FetchFromArray is ChainlinkClient, ConfirmedOwner {
         // API docs: https://www.coingecko.com/en/api/documentation?
         req.add(
             "get",
-            "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&per_page=10"
+            "https://colintalkscrypto.com/cbbi/data/latest.json"
         );
 
         // Set the path to find the desired data in the API response, where the response format is:
@@ -69,7 +69,7 @@ contract FetchFromArray is ChainlinkClient, ConfirmedOwner {
         // ...
         // .. }]
         // request.add("path", "0.id"); // Chainlink nodes prior to 1.0.0 support this format
-        req.add("path", "0,id"); // Chainlink nodes 1.0.0 and later support this format
+        req.add("path", concatenateStrings("Price,",uint256ToString(block.timestamp))); // Chainlink nodes 1.0.0 and later support this format
         // Sends the request
         return sendChainlinkRequest(req, fee);
     }
@@ -94,5 +94,40 @@ contract FetchFromArray is ChainlinkClient, ConfirmedOwner {
             link.transfer(msg.sender, link.balanceOf(address(this))),
             "Unable to transfer"
         );
+    }
+
+    function concatenateStrings(string memory a, string memory b) public pure returns (string memory) {
+        bytes memory bytesA = bytes(a);
+        bytes memory bytesB = bytes(b);
+        bytes memory concatenated = new bytes(bytesA.length + bytesB.length);
+
+        uint k = 0;
+        for (uint i = 0; i < bytesA.length; i++) {
+            concatenated[k++] = bytesA[i];
+        }
+        for (uint i = 0; i < bytesB.length; i++) {
+            concatenated[k++] = bytesB[i];
+        }
+
+        return string(concatenated);
+    }
+
+    function uint256ToString(uint256 _i) public pure returns (string memory) {
+        if (_i == 0) {
+            return "0";
+        }
+        uint256 j = _i;
+        uint256 length;
+        while (j != 0) {
+            length++;
+            j /= 10;
+        }
+        bytes memory bstr = new bytes(length);
+        uint256 k = length - 1;
+        while (_i != 0) {
+            bstr[k--] = bytes1(uint8(48 + (_i % 10)));
+            _i /= 10;
+        }
+        return string(bstr);
     }
 }
