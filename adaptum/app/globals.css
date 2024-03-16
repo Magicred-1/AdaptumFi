@@ -16,6 +16,12 @@
   }
 }
 
+.dynamic-shadow-dom {
+  --dynamic-connect-button-background: #4457FF;
+  --dynamic-connect-button-color: #ffffff;
+  --dynamic-text-primary: #040404;
+}
+
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(

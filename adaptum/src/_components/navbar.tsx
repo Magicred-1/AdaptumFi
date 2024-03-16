@@ -28,7 +28,9 @@ const Navbar = () => {
             </div>
             <div className="flex items-center gap-4">
             <Image src={light} alt="light" width={30} height={30} />
-            <DynamicWidget />
+            <DynamicWidget
+                innerButtonComponent={<button>Connect Wallet</button>}
+            />
             </div>
         </nav>
     </div>
