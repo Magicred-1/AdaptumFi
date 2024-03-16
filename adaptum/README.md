@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+<a href="https://www.adaptum.finance"><img src ="./public/logo_variant_full.png" alt="Adaptum Fi" width="100%"/></a>
 
-## Getting Started
+# [AdaptumFi](#) - The Future of DCA is Here!
+## Powered by <img src="https://moonbeam.network/wp-content/uploads/2022/10/Hyperlane-Ecosystem-Logo.png" alt="Hyperlane Logo" width="35"/> Hyperlane.
 
-First, run the development server:
+At AdaptumFi, we are building the future of DCA (Dollar Cost Averaging) by providing a decentralized, in an cross chain
+& On-Chain manner, to help users invest in their favorite assets, without the need to worry about the market volatility.
+
+## Features
+
+- **Decentralized**: AdaptumFi is a decentralized platform, which means that the users have full control over their funds and investments.
+
+- **Cross Chain**: AdaptumFi is a cross chain platform, which means that the users can invest in their favorite assets, across different blockchains.
+
+- **On-Chain**: AdaptumFi is an on-chain platform, which means that the users can invest in their favorite assets, without the need to worry about the market volatility.
+
+- **DCA (Dollar Cost Averaging)**: AdaptumFi is a DCA platform, which means that the users can invest in their favorite assets, without the need to worry about the market volatility.
+
+# Preview
+
+The app is deployed on Vercel and can be accessed at [https://adaptumfi.xyz/](https://adaptumfi.xyz/)
+
+## Getting started
+
+Install dependencies
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm i
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Copy `.env.example` to `.env.local` and set the environment variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+To get a Dynamic.xyz API key, visit [Dynamic.xyz](https://dynamic.xyz/)
 
-## Learn More
+## Deployed Contracts
 
-To learn more about Next.js, take a look at the following resources:
+| CONTRACTS              | ADDRESSES                                  |
+|------------------------|--------------------------------------------|
+| X        | x |
+| x | x |
+| x       | x |
+| x | x |
+| x        | x                                         |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+- [Next.js](https://nextjs.org/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Wagmi] (https://wagmi.io/)
+- [Dynamic.xyz](https://dynamic.xyz/)
+- Multi-Chain (Ethereum (Sepolia), Arbitrum, Base (Sepolia))
 
-## Deploy on Vercel
+## Authors
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+- [Magicred-1](https://github.com/Magicred-1/)
+- [L0GYKAL](https://github.com/L0GYKAL)
+- [TheoLeFur](https://github.com/TheoLeFur)
+- [Marco75116](https://github.com/Marco75116)
