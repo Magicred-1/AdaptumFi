@@ -51,7 +51,9 @@ export default function Home() {
         <div className="flex flex-col justify-center items-start">
         <h1 className="text-3xl md:text-4xl font-normal mb-4">Unlocking the Future of AMM On-Chain DCA with Adaptum Finance</h1>
         <p className="text-xl font-extralight mb-6">DCA Investing made easy using indicators trading.</p>
-        <button className="w-32 h-9 bg-indigo-700 bg-opacity-40 rounded-lg shadow border border-white border-opacity-50 flex justify-center items-center gap-2.5">
+        <button 
+        onClick={() => {window.location.href = '/invest'}}
+        className="w-32 h-9 bg-indigo-700 bg-opacity-40 rounded-lg shadow border border-white border-opacity-50 flex justify-center items-center gap-2.5">
           <span className="text-xs font-normal">Get Started</span>
         </button>
         </div>

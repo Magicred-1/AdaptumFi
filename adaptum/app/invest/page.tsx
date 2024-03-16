@@ -1,11 +1,12 @@
 'use client'
 import React, { useState } from 'react'
 import InvestChart from '@/src/_components/charts/invest-chart';
+import ComparisonChart from '@/src/_components/charts/comparison-chart';
 
 export const Invest = () => {
   const [network, setNetwork] = useState('');
-  const [sellCurrency, setSellCurrency] = useState('');
-  const [receiveCurrency, setReceiveCurrency] = useState('');
+  const [sellCurrency, setSellCurrency] = useState('USDC');
+  const [receiveCurrency, setReceiveCurrency] = useState('ETH');
   const [amount, setAmount] = useState('');
   const [interval, setInterval] = useState('');
   const [indicator, setIndicator] = useState('');
@@ -108,7 +109,7 @@ export const Invest = () => {
           <div className="text-white">
             {/* Placeholder for TradingView Widget */}
             <div className="flex justify-between mb-4">
-              <h2>USDC/ETH</h2>
+              <h2>{sellCurrency} / {receiveCurrency}</h2>
               <div>
                 <span className="bg-blue-600 px-2 py-1 rounded-lg mr-2">2778.7 +4.5</span>
                 <span className="bg-blue-600 px-2 py-1 rounded-lg">2783.2</span>
@@ -127,7 +128,8 @@ export const Invest = () => {
             {/* Placeholder for Comparison Chart or Info */}
             <h2>With Adaptum VS Without it</h2>
             <div className="h-64 bg-gray-800 rounded-lg mt-4 flex items-center justify-center">
-              <span className="text-gray-400">Comparison Chart Placeholder</span>
+              {/* <span className="text-gray-400">Comparison Chart Placeholder</span> */}
+              <ComparisonChart />
             </div>
           </div>
         </div>
