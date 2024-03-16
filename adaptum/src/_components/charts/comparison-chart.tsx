@@ -2,31 +2,23 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
 const data = [
     {
       name: '23/08/2021',
-      price: 4000,
+      us: 4000,
+      others: 2400,
     },
     {
       name: '24/08/2021',
-      price: 3000,
+      us: 3000,
+      others: 1398,
     },
     {
       name: '25/08/2021',
-      price: 2000,
+      us: 2000,
+      others: 300,
     },
     {
       name: '26/08/2021',
-      price: 2780,
-    },
-    {
-      name: '27/08/2021',
-      price: 1890,
-    },
-    {
-      name: '28/08/2021',
-      price: 2390,
-    },
-    {
-      name: '29/08/2021',
-      price: 3490,
+      us: 2780,
+      others: 2000,
     },
   ];
 
@@ -45,7 +37,8 @@ export const ComparisonChart = () => (
     <XAxis dataKey="name" />
     <YAxis />
     <Tooltip />
-    <Area type="monotone" dataKey="price" stroke="#8884d8" fill="#8884d8" />
+    <Area type="monotone" dataKey="us" stroke="#8884d8" fill="#8884d8" />
+    <Area type="monotone" dataKey="others" stroke="#82ca9d" fill="#82ca9d" />
   </AreaChart>
 );
 
