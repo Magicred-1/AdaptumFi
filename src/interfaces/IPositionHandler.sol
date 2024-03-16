@@ -7,7 +7,8 @@ interface IPositionHandler {
         address tokenB,
         uint256 positionID,
         address owner,
-        uint256 amount_in
+        uint256 amount_in,
+        uint256 amountSwaps
     );
 
     event Withdraw(
@@ -41,5 +42,7 @@ interface IPositionHandler {
         address tokenA,
         address tokenB
     ) external;
+
+    
     
 }
