@@ -12,4 +12,4 @@
 	url = https://github.com/Uniswap/v3-periphery
 [submodule "lib/hyperlane-monorepo"]
 	path = lib/hyperlane-monorepo
-	url = https://github.com/hyperlane-xyz/hyperlane-monorepo
+	url = https://github.com/L0GYKAL/hyperlane-monorepo
