@@ -1,4 +1,4 @@
-<a href="https://www.adaptum.finance"><img src ="./public/logo_variant_full.png" alt="Adaptum Fi" width="100%"/></a>
+<a href="https://www.adaptum.finance"><img src ="./adaptum/public/logo_variant_full.png" alt="Adaptum Fi" width="100%"/></a>
 
 # [AdaptumFi](#) - The Future of DCA is Here!
 ## Powered by <img src="https://moonbeam.network/wp-content/uploads/2022/10/Hyperlane-Ecosystem-Logo.png" alt="Hyperlane Logo" width="35"/> Hyperlane.
@@ -29,8 +29,6 @@ pnpm i
 ```
 
 Copy `.env.example` to `.env.local` and set the environment variables
-
-```bash
 
 To get a Dynamic.xyz API key, visit [Dynamic.xyz](https://dynamic.xyz/)
 
