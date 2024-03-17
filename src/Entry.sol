@@ -37,8 +37,8 @@ contract EntryPoint is CCIPReceiver, OwnerIsCreator {
 
     /// @notice Constructor initializes the contract with the router address.
     /// @param _router The address of the router contract.
-    constructor(address _router, address _uniswapRouter) CCIPReceiver(_router) {
-        swapRouter = ISwapRouter(_uniswapRouter);
+    constructor(address _router, address _pancakeSwap) CCIPReceiver(_router) {
+        swapRouter = ISwapRouter(_pancakeSwap);
     }
 
     /// @dev Modifier that checks if the chain with the given destinationChainSelector is allowlisted.
@@ -116,7 +116,7 @@ contract EntryPoint is CCIPReceiver, OwnerIsCreator {
         onlyAllowlistedDestinationChain(_destinationChainSelector)
         validateReceiver(_receiver)
         returns (bytes32 messageId) {
-            bytes memory _data = abi.encode(_swapId, _minimumAmountOut);
+            bytes memory _data = abi.encode(_swapId, _minimumAmountOut, block.chainid);
 
             // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message
         // address(0) means fees are paid in native gas
