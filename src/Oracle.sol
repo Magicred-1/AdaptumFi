@@ -1,133 +1,130 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.7;
-import {Chainlink, ChainlinkClient} from "chainlink/src/v0.8/ChainlinkClient.sol";
+pragma solidity 0.8.19;
+
+import {FunctionsClient} from "chainlink/src/v0.8/functions/v1_0_0/FunctionsClient.sol";
 import {ConfirmedOwner} from "chainlink/src/v0.8/shared/access/ConfirmedOwner.sol";
-import {LinkTokenInterface} from "chainlink/src/v0.8/shared/interfaces/LinkTokenInterface.sol";
+import {FunctionsRequest} from "chainlink/src/v0.8/functions/v1_0_0/libraries/FunctionsRequest.sol";
+import {ICBBIOracle} from "./interfaces/ICBBIOracle.sol";
 
 /**
  * Request testnet LINK and ETH here: https://faucets.chain.link/
- * Find information on LINK Token Contracts and get the latest ETH and LINK faucets here: https://docs.chain.link/docs/link-token-contracts/
+ * Find information on LINK Token Contracts and get the latest ETH and LINK faucets here: https://docs.chain.link/resources/link-token-contracts/
  */
 
 /**
- * THIS IS AN EXAMPLE CONTRACT THAT USES HARDCODED VALUES FOR CLARITY.
- * THIS IS AN EXAMPLE CONTRACT THAT USES UN-AUDITED CODE.
- * DO NOT USE THIS CODE IN PRODUCTION.
+ * @title GettingStartedFunctionsConsumer
+ * @notice This is an example contract to show how to make HTTP requests using Chainlink
+ * @dev This contract uses hardcoded values and should not be used in production.
  */
 
-contract FetchFromArray is ChainlinkClient, ConfirmedOwner {
-    using Chainlink for Chainlink.Request;
+contract CBBIOracle is FunctionsClient, ConfirmedOwner, ICBBIOracle {
+    using FunctionsRequest for FunctionsRequest.Request;
 
-    string public id;
+    // State variables to store the last request ID, response, and error
+    bytes32 public s_lastRequestId;
+    bytes public s_lastResponse;
+    bytes public s_lastError;
 
-    bytes32 private jobId;
-    uint256 private fee;
+    // Custom error type
+    error UnexpectedRequestID(bytes32 requestId);
 
-    event RequestFirstId(bytes32 indexed requestId, string id);
+    // Event to log responses
+    event Response(
+        bytes32 indexed requestId,
+        string cbbiIndex,
+        bytes response,
+        bytes err
+    );
+
+    // Router address - Hardcoded for Sepolia
+    // Check to get the router address for your supported network https://docs.chain.link/chainlink-functions/supported-networks
+    address router = 0xb83E47C2bC239B3bf370bc41e1459A34b41238D0;
+
+    // JavaScript source code
+    // Fetch character name from the CBBI Index
+    // Documentation: https://colintalkscrypto.com/cbbi/data/latest.json
+    string source =
+        "const characterId = args[0];"
+        "const apiResponse = await Functions.makeHttpRequest({"
+        "url: https://colintalkscrypto.com/cbbi/data/latest.json"
+        "});"
+        "const { data } = apiResponse;"
+        "const timestamps = Object.keys(data.RUPL);"
+        "const latestTimestamp = Math.max(...timestamps);"
+        "const lastPrice = data.Confidence[latestTimestamp];"
+        "console.log('Last Price:', lastPrice);"
+        "const priceWithoutDecimal = Math.floor(lastPrice * 100);"
+        "console.log('Price without decimal:', priceWithoutDecimal);"
+        "return Functions.encodeUint256(priceWithoutDecimal);";
+
+    //Callback gas limit
+    uint32 gasLimit = 300000;
+
+    // donID - Hardcoded for Sepolia
+    // Check to get the donID for your supported network https://docs.chain.link/chainlink-functions/supported-networks
+    bytes32 donID =
+        0x66756e2d657468657265756d2d7365706f6c69612d3100000000000000000000;
+
+    // State variable to store the returned character information
+    uint256 public cbbiIndex;
 
     /**
-     * @notice Initialize the link token and target oracle
-     *
-     * Sepolia Testnet details:
-     * Link Token: 0x779877A7B0D9E8603169DdbD7836e478b4624789
-     * Oracle: 0x6090149792dAAeE9D1D568c9f9a6F6B46AA29eFD (Chainlink DevRel)
-     * jobId: 7d80a6386ef543a3abb52817f6707e3b
-     *
+     * @notice Initializes the contract with the Chainlink router address and sets the contract owner
      */
-    constructor() ConfirmedOwner(msg.sender) {
-        setChainlinkToken(0x779877A7B0D9E8603169DdbD7836e478b4624789);
-        setChainlinkOracle(0x6090149792dAAeE9D1D568c9f9a6F6B46AA29eFD);
-        jobId = "7d80a6386ef543a3abb52817f6707e3b";
-        fee = (1 * LINK_DIVISIBILITY) / 10; // 0,1 * 10**18 (Varies by network and job)
-    }
+    constructor() FunctionsClient(router) ConfirmedOwner(msg.sender) {}
 
     /**
-     * Create a Chainlink request to retrieve API response, find the target
-     * data which is located in a list
+     * @notice Sends an HTTP request for cbbiIndex information
+     * @param subscriptionId The ID for the Chainlink subscription
+     * @param args The arguments to pass to the HTTP request
+     * @return requestId The ID of the request
      */
-    function requestFirstId() public returns (bytes32 requestId) {
-        Chainlink.Request memory req = buildChainlinkRequest(
-            jobId,
-            address(this),
-            this.fulfill.selector
+    function sendRequest(
+        uint64 subscriptionId,
+        string[] calldata args
+    ) external onlyOwner returns (bytes32 requestId) {
+        FunctionsRequest.Request memory req;
+        req.initializeRequestForInlineJavaScript(source); // Initialize the request with JS code
+        if (args.length > 0) req.setArgs(args); // Set the arguments for the request
+
+        // Send the request and store the request ID
+        s_lastRequestId = _sendRequest(
+            req.encodeCBOR(),
+            subscriptionId,
+            gasLimit,
+            donID
         );
 
-        // Set the URL to perform the GET request on
-        // API docs: https://www.coingecko.com/en/api/documentation?
-        req.add(
-            "get",
-            "https://colintalkscrypto.com/cbbi/data/latest.json"
-        );
-
-        // Set the path to find the desired data in the API response, where the response format is:
-        // [{
-        //  "id": "bitcoin",
-        //  "symbol": btc",
-        // ...
-        // },
-        //{
-        // ...
-        // .. }]
-        // request.add("path", "0.id"); // Chainlink nodes prior to 1.0.0 support this format
-        req.add("path", concatenateStrings("Price,",uint256ToString(block.timestamp))); // Chainlink nodes 1.0.0 and later support this format
-        // Sends the request
-        return sendChainlinkRequest(req, fee);
+        return s_lastRequestId;
     }
 
     /**
-     * Receive the response in the form of string
+     * @notice Callback function for fulfilling a request
+     * @param requestId The ID of the request to fulfill
+     * @param response The HTTP response data
+     * @param err Any errors from the Functions request
      */
-    function fulfill(
-        bytes32 _requestId,
-        string memory _id
-    ) public recordChainlinkFulfillment(_requestId) {
-        emit RequestFirstId(_requestId, _id);
-        id = _id;
+    function fulfillRequest(
+        bytes32 requestId,
+        bytes memory response,
+        bytes memory err
+    ) internal override {
+        if (s_lastRequestId != requestId) {
+            revert UnexpectedRequestID(requestId); // Check if request IDs match
+        }
+        // Update the contract's state variables with the response and any errors
+        s_lastResponse = response;
+        cbbiIndex = abi.decode(response, (uint256));
+        s_lastError = err;
+
+        emit Response(requestId, "", s_lastResponse, s_lastError);
     }
 
     /**
-     * Allow withdraw of Link tokens from the contract
+     * @notice Getter function to retrieve the CBBI index
+     * @return The CBBI index value
      */
-    function withdrawLink() public onlyOwner {
-        LinkTokenInterface link = LinkTokenInterface(chainlinkTokenAddress());
-        require(
-            link.transfer(msg.sender, link.balanceOf(address(this))),
-            "Unable to transfer"
-        );
-    }
-
-    function concatenateStrings(string memory a, string memory b) public pure returns (string memory) {
-        bytes memory bytesA = bytes(a);
-        bytes memory bytesB = bytes(b);
-        bytes memory concatenated = new bytes(bytesA.length + bytesB.length);
-
-        uint k = 0;
-        for (uint i = 0; i < bytesA.length; i++) {
-            concatenated[k++] = bytesA[i];
-        }
-        for (uint i = 0; i < bytesB.length; i++) {
-            concatenated[k++] = bytesB[i];
-        }
-
-        return string(concatenated);
-    }
-
-    function uint256ToString(uint256 _i) public pure returns (string memory) {
-        if (_i == 0) {
-            return "0";
-        }
-        uint256 j = _i;
-        uint256 length;
-        while (j != 0) {
-            length++;
-            j /= 10;
-        }
-        bytes memory bstr = new bytes(length);
-        uint256 k = length - 1;
-        while (_i != 0) {
-            bstr[k--] = bytes1(uint8(48 + (_i % 10)));
-            _i /= 10;
-        }
-        return string(bstr);
+    function getCBBIIndex() public view returns (uint256) {
+        return cbbiIndex;
     }
 }

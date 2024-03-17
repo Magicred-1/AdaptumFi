@@ -3,12 +3,7 @@ pragma solidity ^0.8.17;
 interface IPositionHandler {
     /* -------------------- EVENTS -------------------------*/
     event Deposit(
-        address tokenA,
-        address tokenB,
-        uint256 positionID,
-        address owner,
-        uint256 amount_in,
-        uint256 amountSwaps
+        address tokenA, address tokenB, uint256 positionID, address owner, uint256 amount_in, uint256 amountSwaps
     );
     event Withdraw(
         address tokenA,
@@ -22,29 +17,13 @@ interface IPositionHandler {
 
     /* -------------------- ERRORS -------------------------*/
 
-    error ZeroSwapAmountError(
-        address _tokenA,
-        address _tokenB,
-        address _owner,
-        uint256 _amount_in
-    );
+    error ZeroSwapAmountError(address _tokenA, address _tokenB, address _owner, uint256 _amount_in);
 
-    function deposit(
-        address _tokenA,
-        address _tokenB,
-        address _owner,
-        uint256 _amount_in,
-        uint256 _amount_swaps
-    ) external;
+    function deposit(address _tokenA, address _tokenB, address _owner, uint256 _amount_in, uint256 _amount_swaps)
+        external;
 
-    function withdraw(
-        address _tokenA,
-        address _tokenB,
-        address _destinationAddress,
-        uint256 _indexDeposit
-    ) external;
+    function withdraw(address _tokenA, address _tokenB, address _destinationAddress, uint256 _indexDeposit) external;
 
     function execute(address _tokenA, address _tokenB) external;
 
-    function fetch_oracle() external returns (uint256);
 }

@@ -3,7 +3,6 @@ pragma solidity ^0.8.17;
 import {IPositionHandler} from "./interfaces/IPositionHandler.sol";
 import {PositionData} from "./lib/PositionData.sol";
 import {Constants} from "./lib/Constants.sol";
-
 import {Math} from "openzeppelin-contracts/contracts/utils/math/Math.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
@@ -17,6 +16,7 @@ contract PositionHandkler is IPositionHandler {
 
     uint256 indexDeposit;
     uint256 oracleValue;
+    address oracleAddress;
 
     mapping(address tokenA => mapping(address tokenB => mapping(uint256 positionID => PositionData.UserData userPosData))) userPosTracker;
     mapping(address tokenA => mapping(address tokenB => mapping(uint256 nSwapsExecuted => PositionData.CumData cumData))) cumulativePosData;
@@ -24,8 +24,9 @@ contract PositionHandkler is IPositionHandler {
 
     using Math for uint256;
 
-    /**
-     */
+    constructor(address _oracleAddress) {
+        oracleAddress = _oracleAddress;
+    }
     function deposit(
         address _tokenA,
         address _tokenB,
@@ -95,11 +96,11 @@ contract PositionHandkler is IPositionHandler {
 
         cumulativePosData[_tokenA][_tokenB][swapsExecuted].cumBoost =
             boost +
-            getPreviousBoost(_tokenA, _tokenB, _swapsExecuted);
+            getPreviousBoost(_tokenA, _tokenB, swapsExecuted);
 
         cumulativePosData[_tokenA][_tokenB][swapsExecuted].cumBoostedPrice =
             price.mulDiv(boost, Constants.UNIT) +
-            getPreviousPrice(_tokenA, _tokenB, _swapsExecuted);
+            getPreviousPrice(_tokenA, _tokenB, swapsExecuted);
 
         counterSwapsExecuted[_tokenA][_tokenB].nSwapsExecuted += 1;
     }
@@ -201,7 +202,7 @@ contract PositionHandkler is IPositionHandler {
             _indexDeposit
         ].amountSwaps - cumulativeBoost;
         if (_boost > numberRemainSwap) {
-            setInsolvent(_tokenA, _tokenB, _indexDeposit);
+            setInsolvent(_tokenA, _tokenB, _indexDeposit, currentCounterSwaps);
             return true;
         }
         return false;
@@ -212,11 +213,12 @@ contract PositionHandkler is IPositionHandler {
     function setInsolvent(
         address _tokenA,
         address _tokenB,
-        uint256 _indexDeposit
+        uint256 _indexDeposit,
+        uint256 _currentCounterSwaps
     ) internal {
         userPosTracker[_tokenA][_tokenB][_indexDeposit].isInsolvent = true;
         userPosTracker[_tokenA][_tokenB][_indexDeposit]
-            .nbSwapsEnd = currentCounterSwaps;
+            .nbSwapsEnd = _currentCounterSwaps;
     }
 
     /* -------------------------- GETTER FUNCTION ------------------------- */
@@ -225,22 +227,23 @@ contract PositionHandkler is IPositionHandler {
         address _tokenA,
         address _tokenB,
         uint256 _swapsExecuted
-    ) internal returns (uint256) {
+    ) internal view returns (uint256) {
         return
             (_swapsExecuted == 0)
                 ? 0
-                : cumulativePosData[_tokenA][_tokenB][swapsExecuted - 1]
+                : cumulativePosData[_tokenA][_tokenB][_swapsExecuted - 1]
                     .cumBoost;
     }
+
     function getPreviousPrice(
         address _tokenA,
         address _tokenB,
         uint256 _swapsExecuted
-    ) internal returns (uint256) {
+    ) internal view returns (uint256) {
         return
             (_swapsExecuted == 0)
                 ? 0
-                : cumulativePosData[_tokenA][_tokenB][swapsExecuted - 1]
+                : cumulativePosData[_tokenA][_tokenB][_swapsExecuted - 1]
                     .cumBoostedPrice;
     }
 
@@ -278,18 +281,22 @@ contract PositionHandkler is IPositionHandler {
         address _tokenA,
         address _tokenB
     ) internal view returns (uint256) {
-        boost_start = cumulativePosData[_tokenA][_tokenB][_nbSwapsStart]
-            .cumBoost;
-        boost_end = cumulativePosData[_tokenA][_tokenB][_nbSwapsEnd].cumBoost;
+        uint256 cumBoost = getCumulativeBoost(
+            _nbSwapsStart,
+            _nbSwapsEnd,
+            _tokenA,
+            _tokenB
+        );
 
-        boosted_price_start = cumulativePosData[_tokenA][_tokenB][_nbSwapsStart]
-            .cumBoostedPrice;
-
-        boosted_price_end = cumulativePosData[_tokenA][_tokenB][_nbSwapsEnd]
-            .cumBoostedPrice;
+        uint256 boosted_price_end = cumulativePosData[_tokenA][_tokenB][
+            _nbSwapsEnd
+        ].cumBoostedPrice;
+        uint256 boosted_price_start = cumulativePosData[_tokenA][_tokenB][
+            _nbSwapsStart
+        ].cumBoostedPrice;
 
         uint256 average_price = (boosted_price_end - boosted_price_start)
-            .mulDiv(Constants.UNIT, boost_end - boost_start);
+            .mulDiv(Constants.UNIT, cumBoost);
 
         return average_price;
     }
