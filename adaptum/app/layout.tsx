@@ -29,25 +29,25 @@ const config = createConfig({
 
 const queryClient = new QueryClient();
 
-const evmNetworks = [
-  //sepolia, baseSepolia, arbitrum, arbitrumSepolia
+// const evmNetworks = [
+//   //sepolia, baseSepolia, arbitrum, arbitrumSepolia
 
-  {
-    blockExplorerUrls: ['https://polygonscan.com/'],
-    chainId: 137,
-    chainName: 'Matic Mainnet',
-    iconUrls: ["https://app.dynamic.xyz/assets/networks/polygon.svg"],
-    name: 'Polygon',
-    nativeCurrency: {
-      decimals: 18,
-      name: 'MATIC',
-      symbol: 'MATIC',
-    },
-    networkId: 137,
-    rpcUrls: ['https://polygon-rpc.com'],    
-    vanityName: 'Polygon',
-  },
-];
+//   {
+//     blockExplorerUrls: ['https://polygonscan.com/'],
+//     chainId: 137,
+//     chainName: 'Matic Mainnet',
+//     iconUrls: ["https://app.dynamic.xyz/assets/networks/polygon.svg"],
+//     name: 'Polygon',
+//     nativeCurrency: {
+//       decimals: 18,
+//       name: 'MATIC',
+//       symbol: 'MATIC',
+//     },
+//     networkId: 137,
+//     rpcUrls: ['https://polygon-rpc.com'],    
+//     vanityName: 'Polygon',
+//   },
+// ];
 
 /**
  * Update your environmentId
@@ -60,9 +60,9 @@ export default function RootLayout(props: { children: ReactNode }) {
       <body className={`${Lexend.className}`}>
         <DynamicContextProvider
           settings={{
-            overrides: {
-              evmNetworks
-            },
+            // overrides: {
+            //   evmNetworks
+            // },
             environmentId,
             walletConnectors: [
               EthereumWalletConnectors,

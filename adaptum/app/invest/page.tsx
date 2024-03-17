@@ -2,11 +2,12 @@
 import React, { useMemo, useState } from 'react'
 import InvestChart from '@/src/_components/charts/invest-chart';
 import ComparisonChart from '@/src/_components/charts/comparison-chart';
-import { useAccount, useChainId, useReadContracts, useSwitchChain } from 'wagmi';
+import { useAccount, useChainId, useReadContracts, useSwitchChain, useWriteContract } from 'wagmi';
 import { allTokens } from '@/lib/constants/tokens.constants';
 import { erc20Abi, zeroAddress } from 'viem';
-import { displayDecimalNumber } from '@/lib/helpers/global.helper';
+import { displayDecimalNumber, stringToBigIntWithDecimals } from '@/lib/helpers/global.helper';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
+import { addressDCA } from '@/lib/constants/global.constant';
 
 export default function Invest() {
   const { address ,chainId} = useAccount();
@@ -14,6 +15,9 @@ export default function Invest() {
   const usdcAddress = useMemo(()=>{
     return chainId && allTokens[chainId.toString()] ? allTokens[chainId.toString()][0].address as `0x${string}` : undefined
   },[chainId])
+
+  const [amount, setAmount] = useState('');
+
 
   const erc20Contract = {
 		address: usdcAddress ,
@@ -36,6 +40,11 @@ export default function Invest() {
 				...erc20Contract,
 				functionName: "decimals",
 			},
+      {
+        ...erc20Contract,
+        functionName: "allowance",
+        args: [`${address || zeroAddress}`, addressDCA],
+      },
 		],
 		query: {
 			refetchInterval: 5000,
@@ -52,12 +61,36 @@ export default function Invest() {
 		return "0";
 	}, [isSuccessBalanceWallet, balanceUSDC,address]);
 
+  const amountTokenBigInt = useMemo(() => {
+		return stringToBigIntWithDecimals(
+			amount,
+			balanceUSDC?.[1] as number,
+		);
+	}, [amount, balanceUSDC]);
 
+  
+console.log(balanceUSDC?.[2])
+ 
+  const isApproveNeeded = useMemo(() => {
+		if (isSuccessBalanceWallet) {
+			return amountTokenBigInt > balanceUSDC?.[2];
+		}
+	}, [isSuccessBalanceWallet, amountTokenBigInt, balanceUSDC?.[2]]);
+
+  const {
+		data: hash,
+		isPending,
+		writeContract,
+	} = useWriteContract({
+		mutation: {
+			onSuccess() {
+			},
+		},
+	});
   
 
   const [sellCurrency, setSellCurrency] = useState('USDC');
   const [receiveCurrency, setReceiveCurrency] = useState('ETH');  
-  const [amount, setAmount] = useState('');
   const [interval, setInterval] = useState('');
   const [indicator, setIndicator] = useState('');
   const [hyperplaneOption, setHyperplaneOption] = useState('');
@@ -153,7 +186,16 @@ export default function Invest() {
             <button className={` text-white px-4 py-2 rounded-lg  hover:bg-blue-600 ${hyperplaneOption === 'Base Sepolia' ? "bg-blue-600" : "bg-gray-600" }`} onClick={() => setHyperplaneOption('Base Sepolia')}>Base Sepolia</button>
           </div>
         </div>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg w-full mt-4" onClick={() => {}}>Change Network</button>
+          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg w-full mt-4" onClick={() => {
+            isApproveNeeded
+            && writeContract({
+                address: usdcAddress as any ,
+                abi: erc20Abi,
+                functionName: "approve",
+                args: ["0x0227628f3F023bb0B980b67D528571c95c6DaC1c", amountTokenBigInt], // put addressDCA in the first argument
+              });
+            
+          }}>Approve</button>
       </div>
 
       <div className="flex flex-col w-full md:w-2/3 mt-8 md:mt-0">
