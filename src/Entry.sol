@@ -19,7 +19,7 @@ contract EntryPoint is CCIPReceiver, OwnerIsCreator {
     error SenderNotAllowed(address sender); // Used when the sender has not been allowlisted by the contract owner.
     error InvalidReceiverAddress(); // Used when the receiver address is 0.
 
-    ISwapRouter constant router;
+    ISwapRouter swapRouter;
 
     bytes32 private s_lastReceivedMessageId; // Store the last received messageId.
     address private s_lastReceivedTokenAddress; // Store the last received token address.
@@ -38,7 +38,7 @@ contract EntryPoint is CCIPReceiver, OwnerIsCreator {
     /// @notice Constructor initializes the contract with the router address.
     /// @param _router The address of the router contract.
     constructor(address _router, address _uniswapRouter) CCIPReceiver(_router) {
-        router = ISwapRouter(_uniswapRouter);
+        swapRouter = ISwapRouter(_uniswapRouter);
     }
 
     /// @dev Modifier that checks if the chain with the given destinationChainSelector is allowlisted.
@@ -164,7 +164,6 @@ contract EntryPoint is CCIPReceiver, OwnerIsCreator {
         s_lastReceivedMessageId = any2EvmMessage.messageId; // fetch the messageId
         uint256 swapId;
         uint256 minAmountOut;
-        bytes memory data;
         address tokenOut;
         uint24 poolFee;
         (swapId, tokenOut, minAmountOut, poolFee) = abi.decode(any2EvmMessage.data, (uint256, address, uint256, uint24)); // abi-decoding of the sent text
@@ -173,7 +172,7 @@ contract EntryPoint is CCIPReceiver, OwnerIsCreator {
         s_lastReceivedTokenAmount = any2EvmMessage.destTokenAmounts[0].amount;
 
         // initiate swap
-        amountOut = swapExactInputSingleHop(s_lastReceivedTokenAddress, tokenOut, poolFee, s_lastReceivedTokenAmount);
+        uint256 amountOut = swapExactInputSingleHop(s_lastReceivedTokenAddress, tokenOut, poolFee, s_lastReceivedTokenAmount);
         require(amountOut >= minAmountOut, "Slippage is too high");
 
         // Send the receipt tokens to Hyperlane Wrap routes
@@ -186,9 +185,9 @@ contract EntryPoint is CCIPReceiver, OwnerIsCreator {
         address tokenOut,
         uint24 poolFee,
         uint256 amountIn
-    ) external returns (uint256 amountOut) {
+    ) internal returns (uint256 amountOut) {
         IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
-        IERC20(tokenIn).approve(address(router), amountIn);
+        IERC20(tokenIn).approve(address(swapRouter), amountIn);
 
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
             .ExactInputSingleParams({
@@ -202,7 +201,7 @@ contract EntryPoint is CCIPReceiver, OwnerIsCreator {
             sqrtPriceLimitX96: 0
         });
 
-        amountOut = router.exactInputSingle(params);
+        amountOut = swapRouter.exactInputSingle(params);
     }
 
     /// @notice Construct a CCIP message.
