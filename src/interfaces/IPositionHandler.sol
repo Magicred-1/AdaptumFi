@@ -30,19 +30,21 @@ interface IPositionHandler {
     );
 
     function deposit(
-        address tokenA,
-        address tokenB,
-        address owner,
-        uint256 amount_in,
-        uint256 amount_swaps
+        address _tokenA,
+        address _tokenB,
+        address _owner,
+        uint256 _amount_in,
+        uint256 _amount_swaps
     ) external;
 
     function withdraw(
-        address tokenA,
-        address tokenB,
-        address destinationAddress,
-        uint256 indexDeposit
+        address _tokenA,
+        address _tokenB,
+        address _destinationAddress,
+        uint256 _indexDeposit
     ) external;
 
-    function execute(address tokenA, address tokenB) external;
+    function execute(address _tokenA, address _tokenB) external;
+
+    function fetch_oracle() external returns (uint256);
 }

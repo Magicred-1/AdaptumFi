@@ -9,18 +9,15 @@ import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 
 contract PositionHandkler is IPositionHandler {
-    // CURRENT CODE:
-
-    // TODO: verify units in every invariant
-    // TODO: verify that amount out in withdraw is calculated correctly
-
     // INTEGRATION:
 
     // TODO: integrate the Oracle contract fetching indicator
     // TODO: add the call to contract making the swap
     // TODO: implement the cross-chain logic
 
-    uint256 indexDeposit = 0;
+    uint256 indexDeposit;
+    uint256 oracleValue;
+
     mapping(address tokenA => mapping(address tokenB => mapping(uint256 positionID => PositionData.UserData userPosData))) userPosTracker;
     mapping(address tokenA => mapping(address tokenB => mapping(uint256 nSwapsExecuted => PositionData.CumData cumData))) cumulativePosData;
     mapping(address tokenA => mapping(address tokenB => PositionData.GlobalData globalData)) counterSwapsExecuted;
@@ -67,9 +64,7 @@ contract PositionHandkler is IPositionHandler {
     }
 
     function execute(address _tokenA, address _tokenB) external {
-        uint256 oracleValue = getOracleValue(_tokenA, _tokenB);
         uint256 boost = getBoost(oracleValue);
-
         uint256 swapsExecuted = counterSwapsExecuted[_tokenA][_tokenB]
             .nSwapsExecuted;
         uint256 amountToSwap;
@@ -100,32 +95,13 @@ contract PositionHandkler is IPositionHandler {
 
         cumulativePosData[_tokenA][_tokenB][swapsExecuted].cumBoost =
             boost +
-            _getPreviousBoost(_tokenA, _tokenB, _swapsExecuted);
+            getPreviousBoost(_tokenA, _tokenB, _swapsExecuted);
 
         cumulativePosData[_tokenA][_tokenB][swapsExecuted].cumBoostedPrice =
             price.mulDiv(boost, Constants.UNIT) +
-            _getPreviousPrice(_tokenA, _tokenB, _swapsExecuted);
-
-        cumulativePosData[_tokenA][_tokenB][swapsExecuted]
-            .cumAveragePrice = cumulativePosData[_tokenA][_tokenB][
-            swapsExecuted
-        ].cumWeightedPrice.mulDiv(
-                Constants.UNIT,
-                cumulativePosData[_tokenA][_tokenB][swapsExecuted].cumBoost
-            );
+            getPreviousPrice(_tokenA, _tokenB, _swapsExecuted);
 
         counterSwapsExecuted[_tokenA][_tokenB].nSwapsExecuted += 1;
-    }
-
-    function swap(
-        address _tokenA,
-        address _tokenB,
-        uint256 _amountIn
-    ) internal returns (uint256) {
-        //call the swap function of the pool
-        uint256 amountTokensOut = 10;
-        uint256 priceRatio = amountTokensOut.mulDiv(Constants.UNIT, _amountIn);
-        return priceRatio;
     }
 
     function withdraw(
@@ -192,15 +168,20 @@ contract PositionHandkler is IPositionHandler {
             _destinationAddress
         );
     }
-    function setInsolvent(
+
+    /* ------------------------- INTERNAL FUNCTION ------------------------- */
+
+    function swap(
         address _tokenA,
         address _tokenB,
-        uint256 _indexDeposit
-    ) internal {
-        userPosTracker[_tokenA][_tokenB][_indexDeposit].isInsolvent = true;
-        userPosTracker[_tokenA][_tokenB][_indexDeposit]
-            .nbSwapsEnd = currentCounterSwaps;
+        uint256 _amountIn
+    ) internal returns (uint256) {
+        // call the swap function of the pool
+        uint256 amountTokensOut = 10;
+        uint256 priceRatio = amountTokensOut.mulDiv(Constants.UNIT, _amountIn);
+        return priceRatio;
     }
+
     function verifyInsolvability(
         address _tokenA,
         address _tokenB,
@@ -226,9 +207,21 @@ contract PositionHandkler is IPositionHandler {
         return false;
     }
 
-    /* ------------------------- INTERNAL FUNCTION ------------------------- */
+    /* -------------------------- SETTER FUNCTION ------------------------- */
 
-    function _getPreviousBoost(
+    function setInsolvent(
+        address _tokenA,
+        address _tokenB,
+        uint256 _indexDeposit
+    ) internal {
+        userPosTracker[_tokenA][_tokenB][_indexDeposit].isInsolvent = true;
+        userPosTracker[_tokenA][_tokenB][_indexDeposit]
+            .nbSwapsEnd = currentCounterSwaps;
+    }
+
+    /* -------------------------- GETTER FUNCTION ------------------------- */
+
+    function getPreviousBoost(
         address _tokenA,
         address _tokenB,
         uint256 _swapsExecuted
@@ -239,7 +232,7 @@ contract PositionHandkler is IPositionHandler {
                 : cumulativePosData[_tokenA][_tokenB][swapsExecuted - 1]
                     .cumBoost;
     }
-    function _getPreviousPrice(
+    function getPreviousPrice(
         address _tokenA,
         address _tokenB,
         uint256 _swapsExecuted
@@ -256,13 +249,6 @@ contract PositionHandkler is IPositionHandler {
         uint256 _amountSwaps
     ) private pure returns (uint256) {
         return _amountIn.mulDiv(Constants.UNIT, _amountSwaps);
-    }
-
-    function getOracleValue(
-        address _tokenA,
-        address _tokenB
-    ) private pure returns (uint256) {
-        return 78;
     }
 
     function getBoost(uint256 _oracleVal) private pure returns (uint256) {
