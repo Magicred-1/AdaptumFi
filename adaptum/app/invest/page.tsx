@@ -71,6 +71,7 @@ export default function Invest() {
   };
 
 
+
   return (
     <div className="bg-gray-800 min-h-screen flex flex-col md:flex-row p-4 md:p-8">
       <div className="flex flex-col w-full md:w-1/3 md:mr-8">
@@ -126,14 +127,11 @@ export default function Invest() {
         <div className="mb-4 bg-gray-900 rounded-xl p-2">
           <label className="block text-gray-400 mb-2">Intervals</label>
           <div className="flex space-x-2">
-            <button className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-blue-600" onClick={() => setInterval('Daily')}>Daily</button>
-            <button className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-blue-600" onClick={() => setInterval('Weekly')}>Weekly</button>
-          </div>
-          <div className="flex mt-4 space-x-2">
-            {/* Custom Days Buttons */}
-            <button className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-blue-600" onClick={() => setInterval('7')}>7</button>
-            <button className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-blue-600" onClick={() => setInterval('15')}>15</button>
-            <button className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-blue-600" onClick={() => setInterval('30')}>30</button>
+            <button className={` text-white px-4 py-2 rounded-lg hover:bg-blue-600 ${interval === "Daily" ? "bg-blue-600 " : "bg-gray-600"}`} onClick={() => setInterval('Daily')}>Daily</button>
+            <button className={` text-white px-4 py-2 rounded-lg hover:bg-blue-600 ${interval === "Weekly" ? "bg-blue-600 " : "bg-gray-600"}`} onClick={() => setInterval('Weekly')}>Weekly</button>
+            <button className={` text-white px-4 py-2 rounded-lg hover:bg-blue-600 ${interval === "7" ? "bg-blue-600 " : "bg-gray-600"}`} onClick={() => setInterval('7')}>7</button>
+            <button className={` text-white px-4 py-2 rounded-lg hover:bg-blue-600 ${interval === "15" ? "bg-blue-600 " : "bg-gray-600"}`} onClick={() => setInterval('15')}>15</button>
+            <button className={` text-white px-4 py-2 rounded-lg hover:bg-blue-600 ${interval === "30" ? "bg-blue-600 " : "bg-gray-600"}`} onClick={() => setInterval('30')}>30</button>
           </div>
         </div>
 
@@ -141,8 +139,9 @@ export default function Invest() {
         <div className="mb-4 bg-gray-900 rounded-xl p-2">
           <label className="block text-gray-400 mb-2">Choose an indicator</label>
           <div className="flex space-x-2">
-            <button className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-red-600" onClick={() => setIndicator('CBBI Index')}>CBBI Index</button>
-            <button className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-red-600" onClick={() => setIndicator('None')}>None</button>
+            <button className={` text-white px-4 py-2 rounded-lg  hover:bg-blue-600 ${indicator === 'CBBI Index' ? "bg-blue-600" : "bg-gray-600" }`} onClick={() => setIndicator('CBBI Index')}>CBBI Index</button>
+            <button className={` text-white px-4 py-2 rounded-lg  hover:bg-blue-600 ${indicator === 'None' ? "bg-blue-600" : "bg-gray-600" }`} onClick={() => {
+              setIndicator('None')}}>None</button>
           </div>
         </div>
 
@@ -150,8 +149,8 @@ export default function Invest() {
         <div className='bg-gray-900 rounded-xl p-2'>
           <label className="block text-gray-400 mb-2">Use Hyperplane to get the tokens from another chain</label>
           <div className="flex space-x-2 mb-4">
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg" onClick={() => setHyperplaneOption('Arbitrum Sepolia')}>Arbitrum Sepolia</button>
-            <button className="bg-gray-600 text-white px-4 py-2 rounded-lg" onClick={() => setHyperplaneOption('Base Sepolia')}>Base Sepolia</button>
+            <button className={` text-white px-4 py-2 rounded-lg  hover:bg-blue-600 ${hyperplaneOption === 'Arbitrum Sepolia' ? "bg-blue-600" : "bg-gray-600" }`} onClick={() => setHyperplaneOption('Arbitrum Sepolia')}>Arbitrum Sepolia</button>
+            <button className={` text-white px-4 py-2 rounded-lg  hover:bg-blue-600 ${hyperplaneOption === 'Base Sepolia' ? "bg-blue-600" : "bg-gray-600" }`} onClick={() => setHyperplaneOption('Base Sepolia')}>Base Sepolia</button>
           </div>
         </div>
           <button className="bg-blue-600 text-white px-4 py-2 rounded-lg w-full mt-4" onClick={() => {}}>Change Network</button>
