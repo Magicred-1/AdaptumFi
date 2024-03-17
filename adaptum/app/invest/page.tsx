@@ -1,25 +1,74 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import InvestChart from '@/src/_components/charts/invest-chart';
 import ComparisonChart from '@/src/_components/charts/comparison-chart';
+import { useAccount, useReadContracts } from 'wagmi';
+import { allTokens } from '@/lib/constants/tokens.constants';
+import { erc20Abi, zeroAddress } from 'viem';
+import { displayDecimalNumber } from '@/lib/helpers/global.helper';
 
 export default function Invest() {
+  const { chainId } = useAccount();
+  const { address } = useAccount();
+
+  const usdcAddress = useMemo(()=>{
+    return chainId ?allTokens[chainId.toString()][0].address as `0x${string}` : undefined
+  },[chainId])
+
+  const erc20Contract = {
+		address: usdcAddress ,
+		abi: erc20Abi,
+	} as const;
+
+  const {
+		data: balanceUSDC,
+		isSuccess: isSuccessBalanceWallet,
+		error,
+	} = useReadContracts({
+		allowFailure: false,
+		contracts: [
+			{
+        ...erc20Contract,
+				functionName: "balanceOf",
+				args: [`${address || zeroAddress}`]
+			},
+      {
+				...erc20Contract,
+				functionName: "decimals",
+			},
+		],
+		query: {
+			refetchInterval: 5000,
+		},
+	});
+
+  const balanceUSDCWallet = useMemo(() => {
+		if (isSuccessBalanceWallet) {
+			const balance = Number(
+				displayDecimalNumber(balanceUSDC?.[0], balanceUSDC?.[1]),
+			);
+			return balance.toFixed(2);
+		}
+		return "0";
+	}, [isSuccessBalanceWallet, balanceUSDC,address]);
+
+
+  
+
   const [network, setNetwork] = useState('');
   const [sellCurrency, setSellCurrency] = useState('USDC');
-  const [receiveCurrency, setReceiveCurrency] = useState('ETH');
+  const [receiveCurrency, setReceiveCurrency] = useState('ETH');  
   const [amount, setAmount] = useState('');
   const [interval, setInterval] = useState('');
   const [indicator, setIndicator] = useState('');
   const [hyperplaneOption, setHyperplaneOption] = useState('');
 
   const handleMaxClick = () => {
-    // Assuming 123.23 is the max amount available for simplicity
-    setAmount('123.23');
+    setAmount(balanceUSDCWallet);
   };
 
   const handleHalfClick = () => {
-    // Assuming 123.23 is the max amount available for simplicity
-    setAmount((123.23 / 2).toString());
+    setAmount((Number(balanceUSDCWallet) / 2).toString());
   };
 
   return (
@@ -65,7 +114,7 @@ export default function Invest() {
             <button className="bg-gray-600 text-white px-4 rounded-r-lg" onClick={handleMaxClick}>Max</button>
             <button className="bg-gray-600 text-white px-4 rounded-lg" onClick={handleHalfClick}>Half</button>
           </div>
-          <div className="text-gray-400 mt-2">Available: 123.23 USDC</div>
+          <div className="text-gray-400 mt-2">Available: {balanceUSDCWallet} USDC</div>
         </div>
 
         {/* Intervals */}
