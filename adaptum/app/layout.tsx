@@ -4,7 +4,6 @@ import { DynamicContextProvider } from "@dynamic-labs/sdk-react-core";
 import "./globals.css";
 import { type ReactNode } from "react";
 import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
-import { ZeroDevSmartWalletConnectors } from "@dynamic-labs/ethereum-aa";
 import { DynamicWagmiConnector } from "@dynamic-labs/wagmi-connector";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createConfig, WagmiProvider } from "wagmi";
@@ -66,7 +65,7 @@ export default function RootLayout(props: { children: ReactNode }) {
             environmentId,
             walletConnectors: [
               EthereumWalletConnectors,
-              ZeroDevSmartWalletConnectors,
+              // ZeroDevSmartWalletConnectors,
               
             ],
 

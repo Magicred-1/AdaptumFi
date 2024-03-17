@@ -5,6 +5,7 @@ import logo from '../assets/logos/logo.png'
 import Image from 'next/image';
 import light from '../assets/light_icon.png'
 import Link from 'next/link';
+import TxProcessing from '@/lib/components/tx-processing';
 
 const Navbar = () => {
   return (
@@ -27,6 +28,7 @@ const Navbar = () => {
             </ul>
             </div>
             <div className="flex items-center gap-4">
+            <TxProcessing   />
             <Image src={light} alt="light" width={30} height={30} />
             <DynamicWidget
                 innerButtonComponent={<button>Connect Wallet</button>}

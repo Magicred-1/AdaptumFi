@@ -1,13 +1,15 @@
 'use client'
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import InvestChart from '@/src/_components/charts/invest-chart';
 import ComparisonChart from '@/src/_components/charts/comparison-chart';
-import { useAccount, useChainId, useReadContracts, useSwitchChain, useWriteContract } from 'wagmi';
+import { useAccount, useChainId, useReadContracts, useSwitchChain, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 import { allTokens } from '@/lib/constants/tokens.constants';
 import { erc20Abi, zeroAddress } from 'viem';
 import { displayDecimalNumber, stringToBigIntWithDecimals } from '@/lib/helpers/global.helper';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { addressDCA } from '@/lib/constants/global.constant';
+import { abiDCA } from '@/lib/constants/abis/abidca';
+import useProcessTxState from '@/lib/stores/processTxStateStore';
 
 export default function Invest() {
   const { address ,chainId} = useAccount();
@@ -15,9 +17,10 @@ export default function Invest() {
   const usdcAddress = useMemo(()=>{
     return chainId && allTokens[chainId.toString()] ? allTokens[chainId.toString()][0].address as `0x${string}` : undefined
   },[chainId])
+  const {  removePendingTx, addPendingTx } =
+		useProcessTxState();
 
   const [amount, setAmount] = useState('');
-
 
   const erc20Contract = {
 		address: usdcAddress ,
@@ -69,13 +72,15 @@ export default function Invest() {
 	}, [amount, balanceUSDC]);
 
   
-console.log(balanceUSDC?.[2])
  
   const isApproveNeeded = useMemo(() => {
 		if (isSuccessBalanceWallet) {
 			return amountTokenBigInt > balanceUSDC?.[2];
 		}
 	}, [isSuccessBalanceWallet, amountTokenBigInt, balanceUSDC?.[2]]);
+
+
+  console.log(balanceUSDC?.[2])
 
   const {
 		data: hash,
@@ -84,10 +89,24 @@ console.log(balanceUSDC?.[2])
 	} = useWriteContract({
 		mutation: {
 			onSuccess() {
+        addPendingTx();
 			},
+      onError(data) {
+        console.log(data)
+      }
 		},
 	});
+
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
+		useWaitForTransactionReceipt({
+			hash,
+		});
+
   
+  useEffect(() => {
+    console.log(isConfirmed,isConfirming)
+		if (isConfirmed) removePendingTx();
+	}, [isConfirming,isConfirmed, removePendingTx]);
 
   const [sellCurrency, setSellCurrency] = useState('USDC');
   const [receiveCurrency, setReceiveCurrency] = useState('ETH');  
@@ -187,15 +206,21 @@ console.log(balanceUSDC?.[2])
           </div>
         </div>
           <button className="bg-blue-600 text-white px-4 py-2 rounded-lg w-full mt-4" onClick={() => {
+            
             isApproveNeeded
-            && writeContract({
+            ? writeContract({
                 address: usdcAddress as any ,
                 abi: erc20Abi,
                 functionName: "approve",
-                args: ["0x0227628f3F023bb0B980b67D528571c95c6DaC1c", amountTokenBigInt], // put addressDCA in the first argument
+                args: [addressDCA, amountTokenBigInt], 
+              }) : writeContract({
+                address: addressDCA as any ,
+                abi: abiDCA,
+                functionName: "deposit",
+                args: ["0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238", "0xb16F35c0Ae2912430DAc15764477E179D9B9EbEa" , "0x3C0067736ee2694d312A44deD0D83Ba6a53cFA83" , 1000 ,10 ], 
               });
             
-          }}>Approve</button>
+          }}>{ isApproveNeeded ? "Approve": "Deposit" }</button>
       </div>
 
       <div className="flex flex-col w-full md:w-2/3 mt-8 md:mt-0">
