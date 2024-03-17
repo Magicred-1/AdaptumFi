@@ -56,6 +56,8 @@ contract PositionHandler is IPositionHandler {
         });
 
         userPosTracker[_tokenA][_tokenB][indexDeposit] = userPosData;
+
+        IERC20(_tokenA).transferFrom(msg.sender, address(this), _amount_in);
         NFTDCAPosition(nftPositionFactoryAddress).mint(_owner, indexDeposit);
         indexDeposit++;
 
