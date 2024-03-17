@@ -14,10 +14,6 @@ import {NFTDCAPosition} from "./NFTPosition.sol";
 import {EntryPoint} from "./Entry.sol";
 
 contract PositionHandler is IPositionHandler {
-    // INTEGRATION:
-
-    // TODO: add the call to contract making the swap
-    // TODO: implement the cross-chain logic
 
     uint256 indexDeposit;
     uint256 oracleValue;
@@ -40,14 +36,13 @@ contract PositionHandler is IPositionHandler {
 
     constructor(
         address _oracleAddress,
-        address _nftPositionFactoryAddress,
         address _chainlinkRouterAddress,
         address _mailboxAddress,
         address _destinationSwapAddress,
         uint32 _destinationChaidId
     ) {
         oracleAddress = _oracleAddress;
-        nftPositionFactoryAddress = _nftPositionFactoryAddress;
+        nftPositionFactoryAddress = address(new NFTDCAPosition());
 
         entryPoint = new EntryPoint(_chainlinkRouterAddress, zeroAddress);
 
@@ -92,7 +87,7 @@ contract PositionHandler is IPositionHandler {
         uint256 _amount_in,
         uint256 _amount_swaps
     ) external {
-        if (_amount_swaps != 0) {
+        if (_amount_swaps == 0) {
             revert ZeroSwapAmountError(_tokenA, _tokenB, _owner, _amount_in);
         }
         uint256 swapExecuted = counterSwapsExecuted[_tokenA][_tokenB]
@@ -165,7 +160,6 @@ contract PositionHandler is IPositionHandler {
             _tokenB
         ][_indexDeposit];
 
-        // TODO: use Solmate for this
         require(
             NFTDCAPosition(nftPositionFactoryAddress).ownerOf(_indexDeposit) ==
                 msg.sender,

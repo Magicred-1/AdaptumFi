@@ -11,7 +11,7 @@ contract ExitPoint {
     IMailbox mailBox;
     uint32 destinationChain;
 
-    constructor(address _mailbox, address _hype20Collat, uint32 _destinationChain) {
+    constructor(address _mailbox, address _target, address _hype20Collat, uint32 _destinationChain) {
         hype20Collat = HypERC20Collateral(payable(_hype20Collat));
         mailBox = IMailbox(_mailbox);
         destinationChain = _destinationChain;

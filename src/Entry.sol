@@ -37,8 +37,8 @@ contract EntryPoint is CCIPReceiver, OwnerIsCreator {
 
     /// @notice Constructor initializes the contract with the router address.
     /// @param _router The address of the router contract.
-    constructor(address _router, address _pancakeSwap) CCIPReceiver(_router) {
-        swapRouter = ISwapRouter(_pancakeSwap);
+    constructor(address _router, address _swapRouter) CCIPReceiver(_router) {
+        swapRouter = ISwapRouter(_swapRouter);
     }
 
     /// @dev Modifier that checks if the chain with the given destinationChainSelector is allowlisted.
