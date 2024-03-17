@@ -293,7 +293,4 @@ contract PositionHandkler is IPositionHandler {
 
         return average_price;
     }
-    function withdraw(uint256 positionID, address destinationAddress) external;
-
-    function execute(address tokenA, address tokenB) external;
 }
