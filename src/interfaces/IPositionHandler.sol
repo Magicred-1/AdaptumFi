@@ -18,7 +18,13 @@ interface IPositionHandler {
         uint256 amountTokenB,
         address destinationAddress
     );
-    event SwapExecuted(address tokenA, address tokenB, uint256 amountSwapped);
+
+    event SwapExecuted(
+        address tokenA,
+        address tokenB,
+        uint256 amountSwapped,
+        uint256 exchangeRate
+    );
 
     /* -------------------- ERRORS -------------------------*/
 

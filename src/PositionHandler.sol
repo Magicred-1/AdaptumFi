@@ -97,7 +97,7 @@ contract PositionHandler is IPositionHandler {
             amountToSwap += baseAmountToSwap.mulDiv(boost, Constants.UNIT);
         }
 
-        uint256 price = swap(_tokenA, _tokenB, amountToSwap);
+        uint256 exchangeRate = swap(_tokenA, _tokenB, amountToSwap);
 
         cumulativePosData[_tokenA][_tokenB][swapsExecuted].cumBoost =
             boost +
@@ -108,6 +108,8 @@ contract PositionHandler is IPositionHandler {
             getPreviousPrice(_tokenA, _tokenB, swapsExecuted);
 
         counterSwapsExecuted[_tokenA][_tokenB].nSwapsExecuted += 1;
+
+        emit SwapExecuted(_tokenA, _tokenB, amountToSwap, exchangeRate);
     }
 
     function withdraw(
