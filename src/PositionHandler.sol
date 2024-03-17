@@ -9,6 +9,17 @@ import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 
 contract PositionHandkler is IPositionHandler {
+    // CURRENT CODE:
+
+    // TODO: verify units in every invariant
+    // TODO: verify that amount out in withdraw is calculated correctly
+
+    // INTEGRATION:
+
+    // TODO: integrate the Oracle contract fetching indicator
+    // TODO: add the call to contract making the swap
+    // TODO: implement the cross-chain logic
+
     uint256 indexDeposit = 0;
     mapping(address tokenA => mapping(address tokenB => mapping(uint256 positionID => PositionData.UserData userPosData))) userPosTracker;
     mapping(address tokenA => mapping(address tokenB => mapping(uint256 nSwapsExecuted => PositionData.CumData cumData))) cumulativePosData;
@@ -43,7 +54,7 @@ contract PositionHandkler is IPositionHandler {
         });
 
         userPosTracker[_tokenA][_tokenB][indexDeposit] = userPosData;
-        indexDeposit += 1;
+        indexDeposit++;
 
         emit Deposit(
             _tokenA,
@@ -58,19 +69,20 @@ contract PositionHandkler is IPositionHandler {
     function execute(address _tokenA, address _tokenB) external {
         uint256 oracleValue = getOracleValue(_tokenA, _tokenB);
         uint256 boost = getBoost(oracleValue);
+
         uint256 swapsExecuted = counterSwapsExecuted[_tokenA][_tokenB]
             .nSwapsExecuted;
-        uint256 amountToSwap = 0;
+        uint256 amountToSwap;
 
         for (uint256 i = 0; i <= swapsExecuted; i++) {
             PositionData.UserData memory userPosData = userPosTracker[_tokenA][
                 _tokenB
             ][i];
+
             if (userPosData.isInsolvent) {
                 continue;
             }
             //do the verify Insolvent with the boost - nbSwapsEnd
-
             bool isInsolvent = verifyInsolvability(_tokenA, _tokenB, i, boost);
             if (isInsolvent) {
                 continue;
@@ -80,13 +92,19 @@ contract PositionHandkler is IPositionHandler {
                 userPosData.amountIn,
                 userPosData.amountSwaps
             );
+
             amountToSwap += baseAmountToSwap.mulDiv(boost, Constants.UNIT);
         }
-        uint256 priceRatio = swap(_tokenA, _tokenB, amountToSwap);
+        uint256 price = swap(_tokenA, _tokenB, amountToSwap);
 
-        cumulativePosData[_tokenA][_tokenB][swapsExecuted].cumBoost += boost;
-        cumulativePosData[_tokenA][_tokenB][swapsExecuted]
-            .cumPrice += priceRatio;
+        cumulativePosData[_tokenA][_tokenB][swapsExecuted].cumBoost =
+            boost +
+            _getPreviousBoost(_tokenA, _tokenB, _swapsExecuted);
+
+        cumulativePosData[_tokenA][_tokenB][swapsExecuted].cumPrice =
+            price +
+            _getPreviousPrice(_tokenA, _tokenB, _swapsExecuted);
+
         counterSwapsExecuted[_tokenA][_tokenB].nSwapsExecuted += 1;
     }
 
@@ -94,12 +112,134 @@ contract PositionHandkler is IPositionHandler {
         address _tokenA,
         address _tokenB,
         uint256 _amountIn
-    ) private pure returns (uint256) {
+    ) internal returns (uint256) {
         //call the swap function of the pool
         uint256 amountTokensOut = 10;
-
         uint256 priceRatio = amountTokensOut.mulDiv(Constants.UNIT, _amountIn);
         return priceRatio;
+    }
+
+    function withdraw(
+        address _tokenA,
+        address _tokenB,
+        address _destinationAddress,
+        uint256 _indexDeposit // select the position to withdraw
+    ) external {
+        PositionData.UserData memory userPosData = userPosTracker[_tokenA][
+            _tokenB
+        ][_indexDeposit];
+
+        // TODO: use Solmate for this
+        require(userPosData.owner == msg.sender, "not the owner of this DCA");
+
+        uint256 nbSwapsEnd;
+
+        if (userPosData.nbSwapsEnd < type(uint256).max) {
+            // Only if pos expired
+
+            nbSwapsEnd = userPosData.nbSwapsEnd;
+        } else {
+            nbSwapsEnd = counterSwapsExecuted[_tokenA][_tokenB].nSwapsExecuted;
+        }
+
+        uint256 cumulativeBoost = getCumulativeBoost(
+            userPosData.nbSwapsStart,
+            nbSwapsEnd,
+            _tokenA,
+            _tokenB
+        );
+
+        uint256 baseAmountToSwap = getBaseSwapAmount(
+            userPosData.amountIn,
+            userPosData.amountSwaps
+        );
+
+        uint256 numberRemainSwap = userPosData.amountSwaps - cumulativeBoost;
+        uint256 amountTokenARemain = numberRemainSwap * baseAmountToSwap;
+
+        uint256 averagePrice = getAveragePrice(
+            userPosData.nbSwapsStart,
+            nbSwapsEnd,
+            _tokenA,
+            _tokenB
+        );
+
+        uint256 amountTokenB = baseAmountToSwap
+            .mulDiv(cumulativeBoost, Constants.UNIT)
+            .mulDiv(averagePrice, Constants.UNIT);
+
+        delete userPosTracker[_tokenA][_tokenB][_indexDeposit];
+
+        IERC20(_tokenA).transfer(_destinationAddress, amountTokenARemain);
+
+        IERC20(_tokenB).transfer(_destinationAddress, amountTokenB);
+
+        emit Withdraw(
+            _tokenA,
+            _tokenB,
+            _indexDeposit,
+            amountTokenARemain,
+            amountTokenB,
+            _destinationAddress
+        );
+    }
+    function setInsolvent(
+        address _tokenA,
+        address _tokenB,
+        uint256 _indexDeposit
+    ) internal {
+        userPosTracker[_tokenA][_tokenB][_indexDeposit].isInsolvent = true;
+        userPosTracker[_tokenA][_tokenB][_indexDeposit]
+            .nbSwapsEnd = currentCounterSwaps;
+    }
+    function verifyInsolvability(
+        address _tokenA,
+        address _tokenB,
+        uint256 _indexDeposit,
+        uint256 _boost
+    ) internal returns (bool) {
+        uint256 currentCounterSwaps = counterSwapsExecuted[_tokenA][_tokenB]
+            .nSwapsExecuted;
+        uint256 cumulativeBoost = getCumulativeBoost(
+            userPosTracker[_tokenA][_tokenB][_indexDeposit].nbSwapsStart,
+            currentCounterSwaps,
+            _tokenA,
+            _tokenB
+        );
+
+        uint256 numberRemainSwap = userPosTracker[_tokenA][_tokenB][
+            _indexDeposit
+        ].amountSwaps - cumulativeBoost;
+        if (_boost > numberRemainSwap) {
+            setInsolvent(_tokenA, _tokenB, _indexDeposit);
+            return true;
+        }
+        return false;
+    }
+
+    /* ------------------------- INTERNAL FUNCTION ------------------------- */
+
+    function _getPreviousBoost(
+        address _tokenA,
+        address _tokenB,
+        uint256 _swapsExecuted
+    ) internal returns (uint256) {
+        return
+            (_swapsExecuted == 0)
+                ? 0
+                : cumulativePosData[_tokenA][_tokenB][swapsExecuted - 1]
+                    .cumBoost;
+    }
+    function _getPreviousPrice(
+        address _tokenA,
+        address _tokenB,
+        uint256 _swapsExecuted
+    ) internal returns (uint256) {
+        return
+            (_swapsExecuted == 0)
+                ? 0
+                : cumulativePosData[_tokenA][_tokenB][swapsExecuted - 1]
+                    .cumPrice;
     }
 
     function getBaseSwapAmount(
@@ -124,73 +264,6 @@ contract PositionHandkler is IPositionHandler {
         } else {
             return Constants.NO_BOOST;
         }
-    }
-
-    function withdraw(
-        address _tokenA,
-        address _tokenB,
-        address _destinationAddress,
-        uint256 _indexDeposit // select the position to withdraw
-    ) external {
-        PositionData.UserData memory userPosData = userPosTracker[_tokenA][
-            _tokenB
-        ][_indexDeposit];
-
-        require(userPosData.owner == msg.sender, "not the owner of this DCA");
-
-        uint256 nbSwapsEnd;
-        if (userPosData.nbSwapsEnd != 0) {
-            nbSwapsEnd = userPosData.nbSwapsEnd;
-        } else {
-            nbSwapsEnd = counterSwapsExecuted[_tokenA][_tokenB].nSwapsExecuted;
-        }
-        uint256 cumulativeBoost = getCumulativeBoost(
-            userPosData.nbSwapsStart,
-            nbSwapsEnd,
-            _tokenA,
-            _tokenB
-        );
-        uint256 baseAmountToSwap = getBaseSwapAmount(
-            userPosData.amountIn,
-            userPosData.amountSwaps
-        );
-
-        uint256 numberRemainSwap = userPosData.amountSwaps - cumulativeBoost;
-        uint256 amountTokenARemain = numberRemainSwap * baseAmountToSwap;
-
-        uint256 averagePrice = getAveragePrice(
-            userPosData.nbSwapsStart,
-            nbSwapsEnd,
-            _tokenA,
-            _tokenB
-        );
-
-        uint256 amountTokenB = baseAmountToSwap
-            .mulDiv(cumulativeBoost, Constants.UNIT)
-            .mulDiv(averagePrice, Constants.UNIT);
-
-        delete userPosTracker[_tokenA][_tokenB][_indexDeposit];
-
-        IERC20(_tokenA).transferFrom(
-            address(this),
-            _destinationAddress,
-            amountTokenARemain
-        );
-
-        IERC20(_tokenB).transferFrom(
-            address(this),
-            _destinationAddress,
-            amountTokenB
-        );
-
-        emit Withdraw(
-            _tokenA,
-            _tokenB,
-            _indexDeposit,
-            amountTokenARemain,
-            amountTokenB,
-            _destinationAddress
-        );
     }
 
     function getCumulativeBoost(
@@ -221,6 +294,8 @@ contract PositionHandkler is IPositionHandler {
                 );
         }
 
+        // TODO: remove the for loop and track cumulative boosted price instead of cumulative price
+
         uint256 cumulativeBoost = getCumulativeBoost(
             _nbSwapsStart,
             _nbSwapsEnd,
@@ -234,31 +309,5 @@ contract PositionHandkler is IPositionHandler {
         );
 
         return averagePrice;
-    }
-
-    function verifyInsolvability(
-        address _tokenA,
-        address _tokenB,
-        uint256 _indexDeposit,
-        uint256 _boost
-    ) internal returns (bool) {
-        uint256 currentCounterSwaps = counterSwapsExecuted[_tokenA][_tokenB]
-            .nSwapsExecuted - 1;
-        uint256 cumulativeBoost = getCumulativeBoost(
-            userPosTracker[_tokenA][_tokenB][_indexDeposit].nbSwapsStart,
-            currentCounterSwaps,
-            _tokenA,
-            _tokenB
-        );
-        uint256 numberRemainSwap = userPosTracker[_tokenA][_tokenB][
-            _indexDeposit
-        ].amountSwaps - cumulativeBoost;
-        if (_boost > numberRemainSwap) {
-            userPosTracker[_tokenA][_tokenB][_indexDeposit].isInsolvent = true;
-            userPosTracker[_tokenA][_tokenB][_indexDeposit]
-                .nbSwapsEnd = currentCounterSwaps;
-            return true;
-        }
-        return false;
     }
 }
