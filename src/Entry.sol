@@ -100,30 +100,40 @@ contract EntryPoint is CCIPReceiver, OwnerIsCreator {
     /// @notice Pay for fees in native gas.
     /// @dev Assumes your contract has sufficient native gas like ETH on Ethereum or MATIC on Polygon.
     /// @param _destinationChainSelector The identifier (aka selector) for the destination blockchain.
-    /// @param _receiver The address of the recipient on the destination blockchain.
-    /// @param _token token address.
-    /// @param _amountIn token amount.
+    /// @param _receiver : destination addr
+    /// @param argdata : containing data
     /// @return messageId The ID of the CCIP message that was sent.
     function executeCrossChainSwap(
-        uint64 _destinationChainSelector,
+        uint32 _destinationChainSelector,
         address _receiver,
-        address _token,
-        uint256 _amountIn,
-        uint256 _swapId,
-        uint256 _minimumAmountOut
-    ) external
+        bytes memory argdata
+    )
+        external
         onlyOwner
         onlyAllowlistedDestinationChain(_destinationChainSelector)
         validateReceiver(_receiver)
-        returns (bytes32 messageId) {
-            bytes memory _data = abi.encode(_swapId, _minimumAmountOut);
+        returns (bytes32 messageId)
+    {
+        (
+            uint256 boost,
+            address _tokenA,
+            address _tokenB,
+            uint256 _amountIn,
+            uint256 _swapId,
+            uint256 _minimumAmountOut
+        ) = abi.decode(
+                argdata,
+                (uint256, address, address, uint256, uint256, uint256)
+            );
+        bytes memory _data = abi.encode(_swapId, _minimumAmountOut);
+        uint32 _dest;
 
-            // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message
+        // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message
         // address(0) means fees are paid in native gas
         Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(
             _receiver,
             _data,
-            _token,
+            _tokenB,
             _amountIn,
             address(0)
         );
@@ -138,17 +148,15 @@ contract EntryPoint is CCIPReceiver, OwnerIsCreator {
             revert NotEnoughBalance(address(this).balance, fees);
 
         // approve the Router to spend tokens on contract's behalf. It will spend the amount of the given token
-        IERC20(_token).approve(address(router), _amountIn);
+        IERC20(_tokenB).approve(address(router), _amountIn);
 
         // Send the message through the router and store the returned message ID
-        messageId = router.ccipSend{value: fees}(
-            _destinationChainSelector,
-            evm2AnyMessage
-        );
-
-        // Return the message ID
-        return messageId;
-        }
+        return
+            router.ccipSend{value: fees}(
+                _destinationChainSelector,
+                evm2AnyMessage
+            );
+    }
 
     /// handle a received message
     function _ccipReceive(
@@ -166,19 +174,25 @@ contract EntryPoint is CCIPReceiver, OwnerIsCreator {
         uint256 minAmountOut;
         address tokenOut;
         uint24 poolFee;
-        (swapId, tokenOut, minAmountOut, poolFee) = abi.decode(any2EvmMessage.data, (uint256, address, uint256, uint24)); // abi-decoding of the sent text
+        (swapId, tokenOut, minAmountOut, poolFee) = abi.decode(
+            any2EvmMessage.data,
+            (uint256, address, uint256, uint24)
+        ); // abi-decoding of the sent text
         // Expect one token to be transferred at once, but you can transfer several tokens.
         s_lastReceivedTokenAddress = any2EvmMessage.destTokenAmounts[0].token;
         s_lastReceivedTokenAmount = any2EvmMessage.destTokenAmounts[0].amount;
 
         // initiate swap
-        uint256 amountOut = swapExactInputSingleHop(s_lastReceivedTokenAddress, tokenOut, poolFee, s_lastReceivedTokenAmount);
+        uint256 amountOut = swapExactInputSingleHop(
+            s_lastReceivedTokenAddress,
+            tokenOut,
+            poolFee,
+            s_lastReceivedTokenAmount
+        );
         require(amountOut >= minAmountOut, "Slippage is too high");
 
         // Send the receipt tokens to Hyperlane Wrap routes
-
     }
-
 
     function swapExactInputSingleHop(
         address tokenIn,
@@ -191,15 +205,15 @@ contract EntryPoint is CCIPReceiver, OwnerIsCreator {
 
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
             .ExactInputSingleParams({
-            tokenIn: tokenIn,
-            tokenOut: tokenOut,
-            fee: poolFee,
-            recipient: msg.sender,
-            deadline: block.timestamp,
-            amountIn: amountIn,
-            amountOutMinimum: 0,
-            sqrtPriceLimitX96: 0
-        });
+                tokenIn: tokenIn,
+                tokenOut: tokenOut,
+                fee: poolFee,
+                recipient: msg.sender,
+                deadline: block.timestamp,
+                amountIn: amountIn,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            });
 
         amountOut = swapRouter.exactInputSingle(params);
     }

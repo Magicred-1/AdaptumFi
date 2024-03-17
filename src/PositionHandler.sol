@@ -3,6 +3,7 @@ pragma solidity ^0.8.17;
 import {IPositionHandler} from "./interfaces/IPositionHandler.sol";
 import {PositionData} from "./lib/PositionData.sol";
 import {Constants} from "./lib/Constants.sol";
+import {IMailbox} from "lib/hyperlane-monorepo/solidity/contracts/interfaces/IMailbox.sol";
 
 import {Math} from "openzeppelin-contracts/contracts/utils/math/Math.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
@@ -10,6 +11,7 @@ import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol
 
 import {ICBBIOracle} from "./interfaces/ICBBIOracle.sol";
 import {NFTDCAPosition} from "./NFTPosition.sol";
+import {EntryPoint} from "./Entry.sol";
 
 contract PositionHandler is IPositionHandler {
     // INTEGRATION:
@@ -19,8 +21,16 @@ contract PositionHandler is IPositionHandler {
 
     uint256 indexDeposit;
     uint256 oracleValue;
+    uint32 destinationChainId;
+
     address oracleAddress;
     address nftPositionFactoryAddress;
+    address mailboxAddress;
+    address destinationSwapAddress;
+
+    address public constant zeroAddress = address(0);
+
+    EntryPoint entryPoint;
 
     mapping(address tokenA => mapping(address tokenB => mapping(uint256 positionID => PositionData.UserData userPosData))) userPosTracker;
     mapping(address tokenA => mapping(address tokenB => mapping(uint256 nSwapsExecuted => PositionData.CumData cumData))) cumulativePosData;
@@ -28,10 +38,53 @@ contract PositionHandler is IPositionHandler {
 
     using Math for uint256;
 
-    constructor(address _oracleAddress, address _nftPositionFactoryAddress) {
+    constructor(
+        address _oracleAddress,
+        address _nftPositionFactoryAddress,
+        address _chainlinkRouterAddress,
+        address _mailboxAddress,
+        address _destinationSwapAddress,
+        uint32 _destinationChaidId
+    ) {
         oracleAddress = _oracleAddress;
         nftPositionFactoryAddress = _nftPositionFactoryAddress;
+
+        entryPoint = new EntryPoint(_chainlinkRouterAddress, zeroAddress);
+
+        mailboxAddress = _mailboxAddress;
+        destinationSwapAddress = _destinationSwapAddress;
+        destinationChainId = _destinationChaidId;
     }
+
+    function handle(
+        uint32 _origin,
+        bytes32 _sender,
+        bytes calldata _message
+    ) external payable {
+        require(msg.sender == mailboxAddress, "Not the MailBox");
+
+        (
+            address _tokenA,
+            address _tokenB,
+            uint256 swapsExecuted,
+            uint256 amountToSwap,
+            uint256 exchangeRate,
+            uint256 boost
+        ) = abi.decode(
+                _message,
+                (address, address, uint256, uint256, uint256, uint256)
+            );
+
+        updateState(
+            _tokenA,
+            _tokenB,
+            swapsExecuted,
+            amountToSwap,
+            exchangeRate,
+            boost
+        );
+    }
+
     function deposit(
         address _tokenA,
         address _tokenB,
@@ -99,19 +152,7 @@ contract PositionHandler is IPositionHandler {
             amountToSwap += baseAmountToSwap.mulDiv(boost, Constants.UNIT);
         }
 
-        uint256 exchangeRate = swap(_tokenA, _tokenB, amountToSwap);
-
-        cumulativePosData[_tokenA][_tokenB][swapsExecuted].cumBoost =
-            boost +
-            getPreviousBoost(_tokenA, _tokenB, swapsExecuted);
-
-        cumulativePosData[_tokenA][_tokenB][swapsExecuted].cumBoostedPrice =
-            price.mulDiv(boost, Constants.UNIT) +
-            getPreviousPrice(_tokenA, _tokenB, swapsExecuted);
-
-        counterSwapsExecuted[_tokenA][_tokenB].nSwapsExecuted += 1;
-
-        emit SwapExecuted(_tokenA, _tokenB, amountToSwap, exchangeRate);
+        swap(_tokenA, _tokenB, amountToSwap, boost);
     }
 
     function withdraw(
@@ -186,15 +227,45 @@ contract PositionHandler is IPositionHandler {
 
     /* ------------------------- INTERNAL FUNCTION ------------------------- */
 
+    function updateState(
+        address _tokenA,
+        address _tokenB,
+        uint256 swapsExecuted,
+        uint256 amountToSwap,
+        uint256 exchangeRate,
+        uint256 boost
+    ) internal {
+        cumulativePosData[_tokenA][_tokenB][swapsExecuted].cumBoost =
+            boost +
+            getPreviousBoost(_tokenA, _tokenB, swapsExecuted);
+
+        cumulativePosData[_tokenA][_tokenB][swapsExecuted].cumBoostedPrice =
+            exchangeRate.mulDiv(boost, Constants.UNIT) +
+            getPreviousPrice(_tokenA, _tokenB, swapsExecuted);
+
+        counterSwapsExecuted[_tokenA][_tokenB].nSwapsExecuted += 1;
+
+        emit SwapExecuted(_tokenA, _tokenB, amountToSwap, exchangeRate);
+    }
+
     function swap(
         address _tokenA,
         address _tokenB,
-        uint256 _amountIn
-    ) internal returns (uint256) {
-        // call the swap function of the pool
-        uint256 amountTokensOut = 10;
-        uint256 priceRatio = amountTokensOut.mulDiv(Constants.UNIT, _amountIn);
-        return priceRatio;
+        uint256 _amountIn,
+        uint256 boost
+    ) internal {
+        entryPoint.executeCrossChainSwap(
+            destinationChainId,
+            address(entryPoint),
+            abi.encode(
+                boost,
+                _tokenA,
+                _tokenB,
+                _amountIn,
+                counterSwapsExecuted[_tokenA][_tokenB].nSwapsExecuted,
+                1
+            )
+        );
     }
 
     function verifyInsolvability(
