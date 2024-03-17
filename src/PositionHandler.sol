@@ -3,20 +3,24 @@ pragma solidity ^0.8.17;
 import {IPositionHandler} from "./interfaces/IPositionHandler.sol";
 import {PositionData} from "./lib/PositionData.sol";
 import {Constants} from "./lib/Constants.sol";
+
 import {Math} from "openzeppelin-contracts/contracts/utils/math/Math.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 
-contract PositionHandkler is IPositionHandler {
+import {ICBBIOracle} from "./interfaces/ICBBIOracle.sol";
+import {NFTDCAPosition} from "./NFTPosition.sol";
+
+contract PositionHandler is IPositionHandler {
     // INTEGRATION:
 
-    // TODO: integrate the Oracle contract fetching indicator
     // TODO: add the call to contract making the swap
     // TODO: implement the cross-chain logic
 
     uint256 indexDeposit;
     uint256 oracleValue;
     address oracleAddress;
+    address nftPositionFactoryAddress;
 
     mapping(address tokenA => mapping(address tokenB => mapping(uint256 positionID => PositionData.UserData userPosData))) userPosTracker;
     mapping(address tokenA => mapping(address tokenB => mapping(uint256 nSwapsExecuted => PositionData.CumData cumData))) cumulativePosData;
@@ -24,8 +28,9 @@ contract PositionHandkler is IPositionHandler {
 
     using Math for uint256;
 
-    constructor(address _oracleAddress) {
+    constructor(address _oracleAddress, address _nftPositionFactoryAddress) {
         oracleAddress = _oracleAddress;
+        nftPositionFactoryAddress = _nftPositionFactoryAddress;
     }
     function deposit(
         address _tokenA,
@@ -47,11 +52,11 @@ contract PositionHandkler is IPositionHandler {
             nbSwapsEnd: type(uint256).max,
             amountIn: _amount_in,
             amountSwaps: _amount_swaps,
-            isInsolvent: false,
-            owner: _owner
+            isInsolvent: false
         });
 
         userPosTracker[_tokenA][_tokenB][indexDeposit] = userPosData;
+        NFTDCAPosition(nftPositionFactoryAddress).mint(_owner, indexDeposit);
         indexDeposit++;
 
         emit Deposit(
@@ -65,7 +70,7 @@ contract PositionHandkler is IPositionHandler {
     }
 
     function execute(address _tokenA, address _tokenB) external {
-        uint256 boost = getBoost(oracleValue);
+        uint256 boost = getBoost(ICBBIOracle(oracleAddress).getCBBIIndex());
         uint256 swapsExecuted = counterSwapsExecuted[_tokenA][_tokenB]
             .nSwapsExecuted;
         uint256 amountToSwap;
@@ -116,7 +121,11 @@ contract PositionHandkler is IPositionHandler {
         ][_indexDeposit];
 
         // TODO: use Solmate for this
-        require(userPosData.owner == msg.sender, "not the owner of this DCA");
+        require(
+            NFTDCAPosition(nftPositionFactoryAddress).ownerOf(_indexDeposit) ==
+                msg.sender,
+            "not the owner of this DCA"
+        );
 
         uint256 nbSwapsEnd;
 
@@ -157,8 +166,9 @@ contract PositionHandkler is IPositionHandler {
         delete userPosTracker[_tokenA][_tokenB][_indexDeposit];
 
         IERC20(_tokenA).transfer(_destinationAddress, amountTokenARemain);
-
         IERC20(_tokenB).transfer(_destinationAddress, amountTokenB);
+
+        NFTDCAPosition(nftPositionFactoryAddress).burn(_indexDeposit);
 
         emit Withdraw(
             _tokenA,
