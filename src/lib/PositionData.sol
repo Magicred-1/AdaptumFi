@@ -17,6 +17,8 @@ library PositionData {
         uint256 cumBoostedPrice; // price[0] * boost[0] + .. + price[N] * boost[N]
         uint256 cumWeightedPrice; // (price[0] * boost[0] + .. + price[N] * boost[N]) / (boost[0] + ... + boost[N])
         // amount_out = amount_in * avgPrice[(start, end)]
+
+        //
     }
 
     struct GlobalData {

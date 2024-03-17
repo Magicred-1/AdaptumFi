@@ -95,15 +95,24 @@ contract PositionHandkler is IPositionHandler {
 
             amountToSwap += baseAmountToSwap.mulDiv(boost, Constants.UNIT);
         }
+
         uint256 price = swap(_tokenA, _tokenB, amountToSwap);
 
         cumulativePosData[_tokenA][_tokenB][swapsExecuted].cumBoost =
             boost +
             _getPreviousBoost(_tokenA, _tokenB, _swapsExecuted);
 
-        cumulativePosData[_tokenA][_tokenB][swapsExecuted].cumPrice =
-            price +
+        cumulativePosData[_tokenA][_tokenB][swapsExecuted].cumBoostedPrice =
+            price.mulDiv(boost, Constants.UNIT) +
             _getPreviousPrice(_tokenA, _tokenB, _swapsExecuted);
+
+        cumulativePosData[_tokenA][_tokenB][swapsExecuted]
+            .cumAveragePrice = cumulativePosData[_tokenA][_tokenB][
+            swapsExecuted
+        ].cumWeightedPrice.mulDiv(
+                Constants.UNIT,
+                cumulativePosData[_tokenA][_tokenB][swapsExecuted].cumBoost
+            );
 
         counterSwapsExecuted[_tokenA][_tokenB].nSwapsExecuted += 1;
     }
@@ -239,7 +248,7 @@ contract PositionHandkler is IPositionHandler {
             (_swapsExecuted == 0)
                 ? 0
                 : cumulativePosData[_tokenA][_tokenB][swapsExecuted - 1]
-                    .cumPrice;
+                    .cumBoostedPrice;
     }
 
     function getBaseSwapAmount(
@@ -283,31 +292,19 @@ contract PositionHandkler is IPositionHandler {
         address _tokenA,
         address _tokenB
     ) internal view returns (uint256) {
-        uint256 relativePrice;
+        boost_start = cumulativePosData[_tokenA][_tokenB][_nbSwapsStart]
+            .cumBoost;
+        boost_end = cumulativePosData[_tokenA][_tokenB][_nbSwapsEnd].cumBoost;
 
-        for (uint256 i = _nbSwapsStart; i <= _nbSwapsEnd; i++) {
-            relativePrice += cumulativePosData[_tokenA][_tokenB][i]
-                .cumPrice
-                .mulDiv(
-                    cumulativePosData[_tokenA][_tokenB][i].cumBoost,
-                    Constants.UNIT
-                );
-        }
+        boosted_price_start = cumulativePosData[_tokenA][_tokenB][_nbSwapsStart]
+            .cumBoostedPrice;
 
-        // TODO: remove the for loop and track cumulative boosted price instead of cumulative price
+        boosted_price_end = cumulativePosData[_tokenA][_tokenB][_nbSwapsEnd]
+            .cumBoostedPrice;
 
-        uint256 cumulativeBoost = getCumulativeBoost(
-            _nbSwapsStart,
-            _nbSwapsEnd,
-            _tokenA,
-            _tokenB
-        );
+        uint256 average_price = (boosted_price_end - boosted_price_start)
+            .mulDiv(Constants.UNIT, boost_end - boost_start);
 
-        uint256 averagePrice = relativePrice.mulDiv(
-            Constants.UNIT,
-            cumulativeBoost
-        );
-
-        return averagePrice;
+        return average_price;
     }
 }
