@@ -10,7 +10,7 @@ import {PositionHandler} from "src/PositionHandler.sol";
 import {CBBIOracle} from "src/Oracle.sol";
 
 contract BaseDeployer is Script {
-    uint256 DEPLOYER_KEY = vm.envUint("DEPLOYER_KEY");
+    uint256 DEPLOYER_KEY;
     uint256[] chainIds = [8453, 42161];
     mapping(uint256 => string) chainIdToRPC;
     mapping(uint256 => address) chainIdToMailbox;
@@ -23,19 +23,9 @@ contract BaseDeployer is Script {
     mapping(uint256 => address) chainIdToWarpRoute;
     mapping(uint256 => address) chainIdToSwapRouter;
 
-    modifier broadcast(uint256 pk) {
-        vm.startBroadcast(pk);
-
-        _;
-
-        vm.stopBroadcast();
-    }
-
-    constructor() {
-        setupFillData();
-    }
-
     function setupFillData() public {
+        DEPLOYER_KEY = vm.envUint("DEPLOYER_KEY");
+
         chainIdToRPC[42161] = "https://arbitrum.llamarpc.com";
         chainIdToMailbox[42161] = 0x979Ca5202784112f4738403dBec5D0F3B9daabB9;
         chainIdToChainlinkRouter[42161] = 0x141fa059441E0ca23ce184B6A78bafD2A517DdE8;
@@ -46,9 +36,11 @@ contract BaseDeployer is Script {
         chainIdToSwapRouter[8453] = 0x8cFe327CEc66d1C090Dd72bd0FF11d690C33a2Eb;
     }
 
-    function setUp() public {}
+    function setUp() public {setupFillData();
+    }
 
     function run() public {
+
         for (uint i; i < chainIds.length; i++){
             uint256 chainId = chainIds[i];
             chainIdToFork[chainId] = vm.createSelectFork(chainIdToRPC[chainId]);
@@ -84,5 +76,5 @@ contract BaseDeployer is Script {
             console.log("chainId:", chainId);
             console.log(chainIdToDcaHub[chainId]);
         }
-    }
+    } 
 }
