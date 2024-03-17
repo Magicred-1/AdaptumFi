@@ -107,13 +107,7 @@ contract EntryPoint is CCIPReceiver, OwnerIsCreator {
         uint32 _destinationChainSelector,
         address _receiver,
         bytes memory argdata
-    )
-        external
-        onlyOwner
-        onlyAllowlistedDestinationChain(_destinationChainSelector)
-        validateReceiver(_receiver)
-        returns (bytes32 messageId)
-    {
+    ) external onlyOwner returns (bytes32 messageId) {
         (
             uint256 boost,
             address _tokenA,
@@ -126,7 +120,6 @@ contract EntryPoint is CCIPReceiver, OwnerIsCreator {
                 (uint256, address, address, uint256, uint256, uint256)
             );
         bytes memory _data = abi.encode(_swapId, _minimumAmountOut);
-        uint32 _dest;
 
         // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message
         // address(0) means fees are paid in native gas
@@ -150,12 +143,12 @@ contract EntryPoint is CCIPReceiver, OwnerIsCreator {
         // approve the Router to spend tokens on contract's behalf. It will spend the amount of the given token
         IERC20(_tokenB).approve(address(router), _amountIn);
 
-        // Send the message through the router and store the returned message ID
-        return
-            router.ccipSend{value: fees}(
-                _destinationChainSelector,
-                evm2AnyMessage
-            );
+        // // Send the message through the router and store the returned message ID
+        // return
+        //     router.ccipSend{value: fees}(
+        //         _destinationChainSelector,
+        //         evm2AnyMessage
+        //     );
     }
 
     /// handle a received message
